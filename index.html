@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNH · Darvas Box Signal</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3a;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --buy: #22c55e;
+      --sell: #ef4444;
+      --hold: #f59e0b;
+      --accent: #6366f1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding: 24px 16px; }
+    .container { max-width: 900px; margin: 0 auto; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
+    .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    .updated { font-size: 13px; color: var(--muted); }
+
+    /* Latest signal card */
+    .signal-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; margin-bottom: 24px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+    .signal-badge { font-size: 36px; font-weight: 800; letter-spacing: 1px; padding: 10px 28px; border-radius: 12px; }
+    .signal-badge.BUY  { background: rgba(34,197,94,.15);  color: var(--buy);  border: 2px solid var(--buy); }
+    .signal-badge.SELL { background: rgba(239,68,68,.15);  color: var(--sell); border: 2px solid var(--sell); }
+    .signal-badge.HOLD { background: rgba(245,158,11,.15); color: var(--hold); border: 2px solid var(--hold); }
+    .signal-meta { flex: 1; min-width: 200px; }
+    .signal-meta .date { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .signal-meta .price { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+    .signal-meta .box-range { font-size: 14px; color: var(--muted); }
+    .signal-reason { font-size: 14px; color: var(--text); line-height: 1.6; flex-basis: 100%; padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px; }
+
+    /* Stats row */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+    .stat .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .stat .value { font-size: 24px; font-weight: 700; }
+    .stat .value.buy  { color: var(--buy); }
+    .stat .value.sell { color: var(--sell); }
+    .stat .value.hold { color: var(--hold); }
+
+    /* Chart */
+    .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .chart-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .chart-wrap { position: relative; height: 260px; }
+
+    /* History table */
+    .history-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .history-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 8px 12px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); }
+    tr:last-child td { border-bottom: none; }
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 6px; font-weight: 700; font-size: 12px; }
+    .pill.BUY  { background: rgba(34,197,94,.15);  color: var(--buy); }
+    .pill.SELL { background: rgba(239,68,68,.15);  color: var(--sell); }
+    .pill.HOLD { background: rgba(245,158,11,.15); color: var(--hold); }
+
+    .no-data { text-align: center; padding: 48px; color: var(--muted); font-size: 15px; }
+    footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 32px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">UNH <span>Darvas Box</span> Signal</div>
+    <div class="updated" id="updated">Loading…</div>
+  </header>
+
+  <div id="latest-card" class="no-data">Loading signal data…</div>
+
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat"><div class="label">Total Signals</div><div class="value" id="total">—</div></div>
+    <div class="stat"><div class="label">Buy Signals</div><div class="value buy" id="buys">—</div></div>
+    <div class="stat"><div class="label">Sell Signals</div><div class="value sell" id="sells">—</div></div>
+    <div class="stat"><div class="label">Hold Signals</div><div class="value hold" id="holds">—</div></div>
+  </div>
+
+  <div class="chart-card" id="chart-card" style="display:none">
+    <h2>Price History &amp; Signals</h2>
+    <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+  </div>
+
+  <div class="history-card">
+    <h2>Signal History</h2>
+    <div id="history-body"></div>
+  </div>
+
+  <footer>Powered by Darvas Box Theory · Updated weekdays at 8 AM · Not financial advice</footer>
+</div>
+
+<script>
+async function load() {
+  let data;
+  try {
+    const res = await fetch('signals.json?v=' + Date.now());
+    data = await res.json();
+  } catch(e) {
+    document.getElementById('latest-card').textContent = 'Could not load signal data.';
+    return;
+  }
+
+  const signals = (data.signals || []).slice().reverse(); // newest first
+  const all     = data.signals || [];
+
+  // Updated timestamp
+  document.getElementById('updated').textContent =
+    data.last_updated ? 'Last updated: ' + data.last_updated : 'No data yet';
+
+  if (signals.length === 0) {
+    document.getElementById('latest-card').innerHTML =
+      '<div class="no-data">No signals yet — check back tomorrow morning.</div>';
+    return;
+  }
+
+  // ── Latest signal card ───────────────────────────────────────────────────
+  const latest = signals[0];
+  const card = document.getElementById('latest-card');
+  card.className = 'signal-card';
+  card.innerHTML = `
+    <div class="signal-badge ${latest.signal}">${latest.signal}</div>
+    <div class="signal-meta">
+      <div class="date">${latest.date}</div>
+      <div class="price">$${parseFloat(latest.close).toFixed(2)}</div>
+      <div class="box-range">${latest.box_bottom && latest.box_top
+        ? 'Box: $' + parseFloat(latest.box_bottom).toFixed(2) + ' – $' + parseFloat(latest.box_top).toFixed(2)
+        : ''}</div>
+    </div>
+    <div class="signal-reason">${latest.reason}</div>`;
+
+  // ── Stats ────────────────────────────────────────────────────────────────
+  const buys  = all.filter(s => s.signal === 'BUY').length;
+  const sells = all.filter(s => s.signal === 'SELL').length;
+  const holds = all.filter(s => s.signal === 'HOLD').length;
+  document.getElementById('total').textContent  = all.length;
+  document.getElementById('buys').textContent   = buys;
+  document.getElementById('sells').textContent  = sells;
+  document.getElementById('holds').textContent  = holds;
+  document.getElementById('stats').style.display = '';
+
+  // ── Chart ────────────────────────────────────────────────────────────────
+  if (all.length > 1) {
+    document.getElementById('chart-card').style.display = '';
+    const labels = all.map(s => s.date);
+    const closes = all.map(s => parseFloat(s.close));
+    const pointColors = all.map(s =>
+      s.signal === 'BUY' ? '#22c55e' : s.signal === 'SELL' ? '#ef4444' : '#f59e0b');
+
+    new Chart(document.getElementById('priceChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'UNH Close',
+          data: closes,
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99,102,241,.08)',
+          fill: true,
+          tension: 0.3,
+          pointBackgroundColor: pointColors,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                const s = all[ctx.dataIndex];
+                return `Signal: ${s.signal}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#6b7280', maxTicksLimit: 10 }, grid: { color: '#2a2d3a' } },
+          y: { ticks: { color: '#6b7280', callback: v => '$'+v }, grid: { color: '#2a2d3a' } }
+        }
+      }
+    });
+  }
+
+  // ── History table ─────────────────────────────────────────────────────────
+  const tbody = signals.map(s => `
+    <tr>
+      <td>${s.date}</td>
+      <td><span class="pill ${s.signal}">${s.signal}</span></td>
+      <td>$${parseFloat(s.close).toFixed(2)}</td>
+      <td>${s.box_bottom && s.box_top
+        ? '$'+parseFloat(s.box_bottom).toFixed(2)+' – $'+parseFloat(s.box_top).toFixed(2)
+        : '—'}</td>
+      <td style="color:#9ca3af;font-size:13px">${s.reason || ''}</td>
+    </tr>`).join('');
+
+  document.getElementById('history-body').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Signal</th><th>Close</th><th>Box Range</th><th>Reason</th>
+      </tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>`;
+}
+
+load();
+</script>
+</body>
+</html>

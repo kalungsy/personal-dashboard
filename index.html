@@ -19,7 +19,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding: 24px 16px; }
-    .container { max-width: 900px; margin: 0 auto; }
+    .container { max-width: 960px; margin: 0 auto; }
 
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
     .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
@@ -27,19 +27,64 @@
     .updated { font-size: 13px; color: var(--muted); }
 
     /* Latest signal card */
-    .signal-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; margin-bottom: 24px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
-    .signal-badge { font-size: 36px; font-weight: 800; letter-spacing: 1px; padding: 10px 28px; border-radius: 12px; }
+    .signal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 0 28px;
+      align-items: center;
+    }
+    .signal-badge {
+      font-size: 36px; font-weight: 800; letter-spacing: 1px;
+      padding: 10px 28px; border-radius: 12px;
+      grid-row: 1 / 3;
+    }
     .signal-badge.BUY  { background: rgba(34,197,94,.15);  color: var(--buy);  border: 2px solid var(--buy); }
     .signal-badge.SELL { background: rgba(239,68,68,.15);  color: var(--sell); border: 2px solid var(--sell); }
     .signal-badge.HOLD { background: rgba(245,158,11,.15); color: var(--hold); border: 2px solid var(--hold); }
-    .signal-meta { flex: 1; min-width: 200px; }
-    .signal-meta .date { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    .signal-meta .price { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
-    .signal-meta .box-range { font-size: 14px; color: var(--muted); }
-    .signal-reason { font-size: 14px; color: var(--text); line-height: 1.6; flex-basis: 100%; padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px; }
+
+    .signal-meta { grid-column: 2; }
+    .signal-meta .date  { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    .signal-meta .price { font-size: 32px; font-weight: 700; }
+
+    .box-stats {
+      grid-column: 3;
+      grid-row: 1 / 3;
+      background: rgba(99,102,241,.08);
+      border: 1px solid rgba(99,102,241,.25);
+      border-radius: 10px;
+      padding: 14px 18px;
+      min-width: 180px;
+    }
+    .box-stats .bs-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+    .box-stats .bs-row   { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 6px; gap: 12px; }
+    .box-stats .bs-label { color: var(--muted); }
+    .box-stats .bs-val   { font-weight: 600; }
+    .bs-val.ceiling { color: var(--buy); }
+    .bs-val.floor   { color: var(--sell); }
+    .bs-val.vol     { color: var(--accent); }
+
+    .signal-reason {
+      grid-column: 1 / 4;
+      font-size: 14px; color: var(--text); line-height: 1.6;
+      padding-top: 16px; border-top: 1px solid var(--border); margin-top: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .signal-card { grid-template-columns: 1fr; grid-template-rows: auto; }
+      .signal-badge { grid-row: auto; display: inline-block; width: fit-content; }
+      .signal-meta  { grid-column: 1; margin-top: 12px; }
+      .box-stats    { grid-column: 1; grid-row: auto; margin-top: 12px; min-width: unset; }
+      .signal-reason { grid-column: 1; }
+    }
 
     /* Stats row */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
     .stat .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
     .stat .value { font-size: 24px; font-weight: 700; }
@@ -49,29 +94,51 @@
 
     /* Chart */
     .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
-    .chart-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-    .chart-wrap { position: relative; height: 260px; }
+    .chart-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .chart-legend { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 18px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .legend-line { width: 24px; height: 3px; border-radius: 2px; }
+    .legend-line.price   { background: #6366f1; }
+    .legend-line.ceiling { background: #22c55e; border-top: 2px dashed #22c55e; height: 0; }
+    .legend-line.floor   { background: #ef4444; border-top: 2px dashed #ef4444; height: 0; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .legend-dot.buy  { background: #22c55e; }
+    .legend-dot.sell { background: #ef4444; }
+    .legend-dot.hold { background: #f59e0b; }
+    .chart-wrap { position: relative; height: 300px; }
+
+    /* Volume chart */
+    .vol-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .vol-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 18px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .vol-wrap { position: relative; height: 120px; }
 
     /* History table */
     .history-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
     .history-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { text-align: left; padding: 8px 12px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
-    td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); }
+    th { text-align: left; padding: 8px 12px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     .pill { display: inline-block; padding: 2px 10px; border-radius: 6px; font-weight: 700; font-size: 12px; }
     .pill.BUY  { background: rgba(34,197,94,.15);  color: var(--buy); }
     .pill.SELL { background: rgba(239,68,68,.15);  color: var(--sell); }
     .pill.HOLD { background: rgba(245,158,11,.15); color: var(--hold); }
 
+    .vol-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .vol-bar-bg { flex: 1; height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; min-width: 60px; max-width: 120px; }
+    .vol-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+    .vol-bar-fill.surge { background: var(--buy); }
+    .vol-text { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
     .no-data { text-align: center; padding: 48px; color: var(--muted); font-size: 15px; }
     footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 32px; }
+    footer a { color: var(--accent); text-decoration: none; }
   </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <div class="logo">UNH <span>Darvas Box</span> Signal</div>
+    <div class="logo">UNH <span>Darvas Box</span></div>
     <div class="updated" id="updated">Loading…</div>
   </header>
 
@@ -85,16 +152,32 @@
   </div>
 
   <div class="chart-card" id="chart-card" style="display:none">
-    <h2>Price History &amp; Signals</h2>
+    <h2>Price History &amp; Darvas Box</h2>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-line price"></div> Close Price</div>
+      <div class="legend-item"><div class="legend-line ceiling"></div> Box Ceiling</div>
+      <div class="legend-item"><div class="legend-line floor"></div> Box Floor</div>
+      <div class="legend-item"><div class="legend-dot buy"></div> BUY breakout</div>
+      <div class="legend-item"><div class="legend-dot sell"></div> SELL breakdown</div>
+      <div class="legend-item"><div class="legend-dot hold"></div> HOLD (in box)</div>
+    </div>
     <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+  </div>
+
+  <div class="vol-card" id="vol-card" style="display:none">
+    <h2>Volume vs 20-Day Avg</h2>
+    <div class="vol-wrap"><canvas id="volChart"></canvas></div>
   </div>
 
   <div class="history-card">
     <h2>Signal History</h2>
-    <div id="history-body"></div>
+    <div id="history-body"><div class="no-data">No signals yet.</div></div>
   </div>
 
-  <footer>Powered by Darvas Box Theory · Updated weekdays at 8 AM · Not financial advice</footer>
+  <footer>
+    Powered by <a href="https://en.wikipedia.org/wiki/Nicolas_Darvas" target="_blank">Darvas Box Theory</a> ·
+    Updated weekdays at 8 AM · Not financial advice
+  </footer>
 </div>
 
 <script>
@@ -102,16 +185,16 @@ async function load() {
   let data;
   try {
     const res = await fetch('signals.json?v=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     data = await res.json();
   } catch(e) {
-    document.getElementById('latest-card').textContent = 'Could not load signal data.';
+    document.getElementById('latest-card').textContent = 'Could not load signal data. (' + e.message + ')';
     return;
   }
 
-  const signals = (data.signals || []).slice().reverse(); // newest first
   const all     = data.signals || [];
+  const signals = all.slice().reverse(); // newest first
 
-  // Updated timestamp
   document.getElementById('updated').textContent =
     data.last_updated ? 'Last updated: ' + data.last_updated : 'No data yet';
 
@@ -121,8 +204,12 @@ async function load() {
     return;
   }
 
-  // ── Latest signal card ───────────────────────────────────────────────────
+  // ── Latest signal card ──────────────────────────────────────────────────────
   const latest = signals[0];
+  const volRatio = latest.avg_volume > 0
+    ? (latest.volume / latest.avg_volume).toFixed(2)
+    : null;
+
   const card = document.getElementById('latest-card');
   card.className = 'signal-card';
   card.innerHTML = `
@@ -130,46 +217,173 @@ async function load() {
     <div class="signal-meta">
       <div class="date">${latest.date}</div>
       <div class="price">$${parseFloat(latest.close).toFixed(2)}</div>
-      <div class="box-range">${latest.box_bottom && latest.box_top
-        ? 'Box: $' + parseFloat(latest.box_bottom).toFixed(2) + ' – $' + parseFloat(latest.box_top).toFixed(2)
-        : ''}</div>
+    </div>
+    <div class="box-stats">
+      <div class="bs-title">Darvas Box</div>
+      ${latest.box_top != null ? `
+      <div class="bs-row"><span class="bs-label">Ceiling</span><span class="bs-val ceiling">$${parseFloat(latest.box_top).toFixed(2)}</span></div>
+      <div class="bs-row"><span class="bs-label">Floor</span><span class="bs-val floor">$${parseFloat(latest.box_bottom).toFixed(2)}</span></div>` : '<div class="bs-row" style="color:var(--muted);font-size:12px">No box identified</div>'}
+      ${volRatio ? `<div class="bs-row"><span class="bs-label">Vol Ratio</span><span class="bs-val vol">${volRatio}×</span></div>` : ''}
     </div>
     <div class="signal-reason">${latest.reason}</div>`;
 
-  // ── Stats ────────────────────────────────────────────────────────────────
+  // ── Stats ───────────────────────────────────────────────────────────────────
   const buys  = all.filter(s => s.signal === 'BUY').length;
   const sells = all.filter(s => s.signal === 'SELL').length;
   const holds = all.filter(s => s.signal === 'HOLD').length;
-  document.getElementById('total').textContent  = all.length;
-  document.getElementById('buys').textContent   = buys;
-  document.getElementById('sells').textContent  = sells;
-  document.getElementById('holds').textContent  = holds;
+  document.getElementById('total').textContent = all.length;
+  document.getElementById('buys').textContent  = buys;
+  document.getElementById('sells').textContent = sells;
+  document.getElementById('holds').textContent = holds;
   document.getElementById('stats').style.display = '';
 
-  // ── Chart ────────────────────────────────────────────────────────────────
-  if (all.length > 1) {
-    document.getElementById('chart-card').style.display = '';
-    const labels = all.map(s => s.date);
-    const closes = all.map(s => parseFloat(s.close));
-    const pointColors = all.map(s =>
-      s.signal === 'BUY' ? '#22c55e' : s.signal === 'SELL' ? '#ef4444' : '#f59e0b');
+  if (all.length < 2) return;
 
-    new Chart(document.getElementById('priceChart'), {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'UNH Close',
+  // ── Price + Darvas Box Chart ─────────────────────────────────────────────────
+  document.getElementById('chart-card').style.display = '';
+  const labels   = all.map(s => s.date);
+  const closes   = all.map(s => parseFloat(s.close));
+  const ceilings = all.map(s => s.box_top    != null ? parseFloat(s.box_top)    : null);
+  const floors   = all.map(s => s.box_bottom != null ? parseFloat(s.box_bottom) : null);
+
+  const pointColors = all.map(s =>
+    s.signal === 'BUY' ? '#22c55e' : s.signal === 'SELL' ? '#ef4444' : '#f59e0b');
+  const pointRadius = all.map(s =>
+    s.signal === 'HOLD' ? 4 : 7);
+  const pointBorder = all.map(s =>
+    s.signal === 'HOLD' ? 1 : 2);
+
+  new Chart(document.getElementById('priceChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Box Ceiling',
+          data: ceilings,
+          borderColor: 'rgba(34,197,94,0.7)',
+          borderDash: [6, 4],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: '+1',
+          backgroundColor: 'rgba(99,102,241,0.07)',
+          tension: 0,
+          spanGaps: true,
+          order: 3,
+        },
+        {
+          label: 'Box Floor',
+          data: floors,
+          borderColor: 'rgba(239,68,68,0.7)',
+          borderDash: [6, 4],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+          spanGaps: true,
+          order: 3,
+        },
+        {
+          label: 'Close Price',
           data: closes,
           borderColor: '#6366f1',
-          backgroundColor: 'rgba(99,102,241,.08)',
-          fill: true,
+          backgroundColor: 'transparent',
+          fill: false,
           tension: 0.3,
+          borderWidth: 2.5,
           pointBackgroundColor: pointColors,
-          pointRadius: 6,
-          pointHoverRadius: 8,
-          borderWidth: 2,
-        }]
+          pointBorderColor: pointColors,
+          pointRadius: pointRadius,
+          pointBorderWidth: pointBorder,
+          pointHoverRadius: 9,
+          order: 1,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0].label,
+            afterBody: (items) => {
+              const idx = items[0].dataIndex;
+              const s = all[idx];
+              const lines = ['', `Signal: ${s.signal}`];
+              if (s.box_top != null)
+                lines.push(`Box: $${parseFloat(s.box_bottom).toFixed(2)} – $${parseFloat(s.box_top).toFixed(2)}`);
+              if (s.avg_volume > 0)
+                lines.push(`Vol Ratio: ${(s.volume / s.avg_volume).toFixed(2)}×`);
+              lines.push('', s.reason || '');
+              return lines;
+            },
+            label: (ctx) => {
+              if (ctx.dataset.label === 'Close Price')
+                return `Close: $${parseFloat(ctx.parsed.y).toFixed(2)}`;
+              if (ctx.dataset.label === 'Box Ceiling' && ctx.parsed.y != null)
+                return `Ceiling: $${parseFloat(ctx.parsed.y).toFixed(2)}`;
+              if (ctx.dataset.label === 'Box Floor' && ctx.parsed.y != null)
+                return `Floor: $${parseFloat(ctx.parsed.y).toFixed(2)}`;
+              return null;
+            }
+          },
+          backgroundColor: '#1a1d27',
+          borderColor: '#2a2d3a',
+          borderWidth: 1,
+          titleColor: '#e8eaf0',
+          bodyColor: '#9ca3af',
+          padding: 12,
+          boxPadding: 4,
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#6b7280', maxTicksLimit: 8, maxRotation: 0 },
+          grid: { color: '#2a2d3a' }
+        },
+        y: {
+          ticks: { color: '#6b7280', callback: v => '$' + v },
+          grid: { color: '#2a2d3a' }
+        }
+      }
+    }
+  });
+
+  // ── Volume Chart ─────────────────────────────────────────────────────────────
+  if (all.some(s => s.avg_volume > 0)) {
+    document.getElementById('vol-card').style.display = '';
+    const avgVols = all.map(s => s.avg_volume || 0);
+    const rawVols = all.map(s => s.volume || 0);
+    const volColors = all.map(s =>
+      s.volume >= (s.avg_volume || 0) * 1.2 ? '#22c55e' : 'rgba(99,102,241,0.6)');
+
+    new Chart(document.getElementById('volChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Volume',
+            data: rawVols,
+            backgroundColor: volColors,
+            borderRadius: 3,
+            order: 1,
+          },
+          {
+            label: '20-Day Avg',
+            data: avgVols,
+            type: 'line',
+            borderColor: '#f59e0b',
+            borderWidth: 1.5,
+            borderDash: [4, 3],
+            pointRadius: 0,
+            fill: false,
+            order: 0,
+          }
+        ]
       },
       options: {
         responsive: true,
@@ -178,37 +392,56 @@ async function load() {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              afterLabel: (ctx) => {
-                const s = all[ctx.dataIndex];
-                return `Signal: ${s.signal}`;
+              label: (ctx) => {
+                const v = ctx.parsed.y;
+                return `${ctx.dataset.label}: ${(v / 1e6).toFixed(1)}M`;
               }
-            }
+            },
+            backgroundColor: '#1a1d27',
+            borderColor: '#2a2d3a',
+            borderWidth: 1,
+            titleColor: '#e8eaf0',
+            bodyColor: '#9ca3af',
           }
         },
         scales: {
-          x: { ticks: { color: '#6b7280', maxTicksLimit: 10 }, grid: { color: '#2a2d3a' } },
-          y: { ticks: { color: '#6b7280', callback: v => '$'+v }, grid: { color: '#2a2d3a' } }
+          x: { ticks: { color: '#6b7280', maxTicksLimit: 8 }, grid: { display: false } },
+          y: { ticks: { color: '#6b7280', callback: v => (v/1e6).toFixed(0)+'M' }, grid: { color: '#2a2d3a' } }
         }
       }
     });
   }
 
-  // ── History table ─────────────────────────────────────────────────────────
-  const tbody = signals.map(s => `
+  // ── History table ─────────────────────────────────────────────────────────────
+  const maxVol = Math.max(...all.map(s => s.volume || 0));
+  const tbody = signals.map(s => {
+    const volPct   = maxVol > 0 ? Math.round((s.volume || 0) / maxVol * 100) : 0;
+    const isSurge  = s.avg_volume > 0 && s.volume >= s.avg_volume * 1.2;
+    const volLabel = s.avg_volume > 0
+      ? `${(s.volume / s.avg_volume).toFixed(2)}×`
+      : (s.volume ? (s.volume / 1e6).toFixed(1) + 'M' : '—');
+    return `
     <tr>
       <td>${s.date}</td>
       <td><span class="pill ${s.signal}">${s.signal}</span></td>
       <td>$${parseFloat(s.close).toFixed(2)}</td>
-      <td>${s.box_bottom && s.box_top
-        ? '$'+parseFloat(s.box_bottom).toFixed(2)+' – $'+parseFloat(s.box_top).toFixed(2)
+      <td>${s.box_bottom != null && s.box_top != null
+        ? '$' + parseFloat(s.box_bottom).toFixed(2) + ' – $' + parseFloat(s.box_top).toFixed(2)
         : '—'}</td>
-      <td style="color:#9ca3af;font-size:13px">${s.reason || ''}</td>
-    </tr>`).join('');
+      <td>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar-bg"><div class="vol-bar-fill${isSurge ? ' surge' : ''}" style="width:${volPct}%"></div></div>
+          <span class="vol-text">${volLabel}</span>
+        </div>
+      </td>
+      <td style="color:#9ca3af;font-size:13px;max-width:260px">${s.reason || ''}</td>
+    </tr>`;
+  }).join('');
 
   document.getElementById('history-body').innerHTML = `
     <table>
       <thead><tr>
-        <th>Date</th><th>Signal</th><th>Close</th><th>Box Range</th><th>Reason</th>
+        <th>Date</th><th>Signal</th><th>Close</th><th>Box Range</th><th>Volume</th><th>Reason</th>
       </tr></thead>
       <tbody>${tbody}</tbody>
     </table>`;

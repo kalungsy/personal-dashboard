@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-03-21 17:10",
+  "last_updated": "2026-03-21 21:29",
   "signals": [
     {
       "date": "2026-03-21",
@@ -12,6 +12,16 @@
       "volume": 38890000,
       "avg_volume": 9810000,
       "note": "Data sourced via web search; yfinance unavailable in sandbox (pip proxy blocked)."
+    },
+    {
+      "date": "2026-03-20",
+      "close": 275.59,
+      "signal": "HOLD",
+      "reason": "Price ($275.59) is inside the box ($264.24-$355.11). Wait for a breakout.",
+      "box_top": 355.11,
+      "box_bottom": 264.24,
+      "volume": 38938167,
+      "avg_volume": 9081633
     }
   ]
 }

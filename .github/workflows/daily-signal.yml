@@ -31,6 +31,7 @@ jobs:
           from pathlib import Path
           from datetime import datetime, timedelta
           import yfinance as yf
+          import pandas as pd
 
           TICKER   = "UNH"
           LOOKBACK = 60
@@ -41,15 +42,20 @@ jobs:
           end   = datetime.today()
           start = end - timedelta(days=LOOKBACK + 10)
           df = yf.download(TICKER, start=start.strftime("%Y-%m-%d"),
-                           end=end.strftime("%Y-%m-%d"), progress=False)
+                           end=end.strftime("%Y-%m-%d"), progress=False, auto_adjust=True)
+
+          # Flatten MultiIndex columns from newer yfinance versions
+          if isinstance(df.columns, pd.MultiIndex):
+              df.columns = df.columns.get_level_values(0)
+
           df = df.tail(LOOKBACK)
 
           if df.empty:
               print("No data returned — market may be closed today.")
               raise SystemExit(0)
 
-          highs = df["High"].values
-          lows  = df["Low"].values
+          highs = df["High"].values.astype(float)
+          lows  = df["Low"].values.astype(float)
           n     = len(df)
 
           box_top = box_bottom = None

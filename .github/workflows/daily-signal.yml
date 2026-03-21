@@ -1,0 +1,138 @@
+name: UNH Daily Signal
+
+on:
+  schedule:
+    - cron: '30 21 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install yfinance pandas -q
+
+      - name: Run Darvas Box analysis
+        id: analysis
+        run: |
+          python3 << 'PYEOF'
+          import json, os
+          from pathlib import Path
+          from datetime import datetime, timedelta
+          import yfinance as yf
+
+          TICKER   = "UNH"
+          LOOKBACK = 60
+          BOX_DAYS = 3
+          VOL_MULT = 1.2
+          JSON_FILE = Path("signals.json")
+
+          end   = datetime.today()
+          start = end - timedelta(days=LOOKBACK + 10)
+          df = yf.download(TICKER, start=start.strftime("%Y-%m-%d"),
+                           end=end.strftime("%Y-%m-%d"), progress=False)
+          df = df.tail(LOOKBACK)
+
+          if df.empty:
+              print("No data returned — market may be closed today.")
+              raise SystemExit(0)
+
+          highs = df["High"].values
+          lows  = df["Low"].values
+          n     = len(df)
+
+          box_top = box_bottom = None
+          i = BOX_DAYS
+          while i < n:
+              ch = highs[i - BOX_DAYS]
+              if all(highs[i - BOX_DAYS + k] <= ch for k in range(1, BOX_DAYS)):
+                  box_top = ch
+                  j, floor = i - BOX_DAYS, lows[i - BOX_DAYS]
+                  while j < n and highs[j] <= box_top * 1.001:
+                      floor = min(floor, lows[j])
+                      j += 1
+                  box_bottom = floor
+                  i = j
+              else:
+                  i += 1
+
+          last_close  = float(df["Close"].iloc[-1])
+          last_volume = float(df["Volume"].iloc[-1])
+          avg_volume  = float(df["Volume"].iloc[-20:].mean())
+          date_str    = df.index[-1].strftime("%Y-%m-%d")
+
+          if box_top is None:
+              signal = "HOLD"
+              reason = "No clear Darvas box found in the lookback window."
+              box_top_out = box_bottom_out = None
+          else:
+              surge = last_volume >= avg_volume * VOL_MULT
+              if last_close > box_top:
+                  signal = "BUY"
+                  reason = (f"Price (${last_close:.2f}) broke ABOVE box ceiling (${box_top:.2f}). "
+                            + ("Volume confirms breakout." if surge else "Volume is weak — watch for false breakout."))
+              elif last_close < box_bottom:
+                  signal = "SELL"
+                  reason = (f"Price (${last_close:.2f}) broke BELOW box floor (${box_bottom:.2f}). "
+                            + ("Volume confirms breakdown." if surge else "Volume is light — may be a shake-out."))
+              else:
+                  signal = "HOLD"
+                  reason = (f"Price (${last_close:.2f}) is inside the box "
+                            f"(${box_bottom:.2f}-${box_top:.2f}). Wait for a breakout.")
+              box_top_out    = round(float(box_top), 2)
+              box_bottom_out = round(float(box_bottom), 2)
+
+          result = {
+              "date":       date_str,
+              "close":      round(last_close, 2),
+              "signal":     signal,
+              "reason":     reason,
+              "box_top":    box_top_out,
+              "box_bottom": box_bottom_out,
+              "volume":     int(last_volume),
+              "avg_volume": int(avg_volume),
+          }
+
+          data = (json.loads(JSON_FILE.read_text())
+                  if JSON_FILE.exists()
+                  else {"ticker": TICKER, "last_updated": "", "signals": []})
+
+          existing = {s["date"] for s in data["signals"]}
+          if date_str in existing:
+              print(f"Signal for {date_str} already recorded — skipping.")
+          else:
+              data["signals"].append(result)
+              data["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+              JSON_FILE.write_text(json.dumps(data, indent=2))
+              print(f"signals.json updated — {date_str}: {signal}")
+
+          print(f"Signal: {signal}")
+          print(f"Close:  ${last_close:.2f}")
+          print(f"Reason: {reason}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"date={date_str}\n")
+              f.write(f"signal={signal}\n")
+              f.write(f"close={last_close:.2f}\n")
+          PYEOF
+
+      - name: Commit and push updated signals.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add signals.json
+          git diff --staged --quiet \
+            && echo "Nothing new to commit." \
+            || (git commit -m "signal: ${{ steps.analysis.outputs.date }} ${{ steps.analysis.outputs.signal }}" \
+                && git push)

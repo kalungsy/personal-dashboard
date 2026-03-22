@@ -222,26 +222,34 @@ function renderTicker(ticker, tdata) {
   panel.innerHTML = html;
 
   // Render charts if we have data
-  if (sigs.length > 0) {
-    renderPriceChart(ticker, sigs);
-    renderVolChart(ticker, sigs);
+  if (sigs.length > 0 || tdata.price_history) {
+    renderPriceChart(ticker, tdata);
+    renderVolChart(ticker, tdata);
   }
 }
 
-function renderPriceChart(ticker, sigs) {
+function renderPriceChart(ticker, tdata) {
   const ctx = document.getElementById('chart-price-' + ticker);
   if (!ctx) return;
   if (charts[ticker + '_price']) charts[ticker + '_price'].destroy();
 
-  const labels = sigs.map(s => s.date);
-  const closes = sigs.map(s => s.close);
-  const tops = sigs.map(s => s.box_top);
-  const bots = sigs.map(s => s.box_bottom);
+  const ph = tdata.price_history;
+  const sigs = tdata.signals || [];
 
-  // Signal dot colors
-  const dotColors = sigs.map(s => COLORS[s.signal] || '#888');
+  // Use full price history if available, else fall back to signals
+  const labels = ph ? ph.dates : sigs.map(s => s.date);
+  const closes = ph ? ph.close : sigs.map(s => s.close);
+  const boxTop = ph ? ph.box_top : (sigs[0]?.box_top ?? null);
+  const boxBot = ph ? ph.box_bottom : (sigs[0]?.box_bottom ?? null);
+  const tops = labels.map(() => boxTop);
+  const bots = labels.map(() => boxBot);
 
-  // Shaded zone between box_bottom and box_top using fill
+  // Signal dots: sparse array — value only on signal dates, null elsewhere
+  const sigMap = {};
+  sigs.forEach(s => { sigMap[s.date] = { close: s.close, signal: s.signal }; });
+  const dotData = labels.map(d => sigMap[d] ? sigMap[d].close : null);
+  const dotColors = labels.map(d => sigMap[d] ? COLORS[sigMap[d].signal] : 'transparent');
+
   charts[ticker + '_price'] = new Chart(ctx, {
     type: 'line',
     data: {
@@ -251,7 +259,7 @@ function renderPriceChart(ticker, sigs) {
           label: 'Box Ceiling',
           data: tops,
           borderColor: COLORS.boxTop,
-          borderWidth: 2,
+          borderWidth: 1.5,
           borderDash: [6, 4],
           pointRadius: 0,
           fill: false,
@@ -262,7 +270,7 @@ function renderPriceChart(ticker, sigs) {
           label: 'Box Floor',
           data: bots,
           borderColor: COLORS.boxBottom,
-          borderWidth: 2,
+          borderWidth: 1.5,
           borderDash: [6, 4],
           pointRadius: 0,
           backgroundColor: 'rgba(38,201,108,0.07)',
@@ -274,13 +282,22 @@ function renderPriceChart(ticker, sigs) {
           label: 'Close Price',
           data: closes,
           borderColor: COLORS.price,
-          borderWidth: 2.5,
-          pointRadius: 5,
-          pointBackgroundColor: dotColors,
-          pointBorderColor: dotColors,
-          pointBorderWidth: 2,
+          borderWidth: 2,
+          pointRadius: 0,
           fill: false,
           tension: 0.3,
+          order: 2
+        },
+        {
+          label: 'Signal',
+          data: dotData,
+          borderColor: 'transparent',
+          backgroundColor: dotColors,
+          pointRadius: labels.map(d => sigMap[d] ? 7 : 0),
+          pointBorderColor: dotColors,
+          pointBorderWidth: 2,
+          showLine: false,
+          fill: false,
           order: 1
         }
       ]
@@ -289,8 +306,20 @@ function renderPriceChart(ticker, sigs) {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { labels: { color: '#9197c0', font: { size: 12 }, boxWidth: 20, padding: 10 } },
-        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + Number(ctx.raw).toFixed(2) } }
+        legend: {
+          labels: {
+            color: '#9197c0', font: { size: 12 }, boxWidth: 20, padding: 10,
+            filter: item => item.text !== 'Signal'
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataset.label === 'Signal' && ctx.raw === null) return null;
+              return ctx.dataset.label + ': $' + Number(ctx.raw).toFixed(2);
+            }
+          }
+        }
       },
       scales: {
         x: { ticks: { color: '#9197c0', maxTicksLimit: 8, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } },
@@ -300,15 +329,27 @@ function renderPriceChart(ticker, sigs) {
   });
 }
 
-function renderVolChart(ticker, sigs) {
+function renderVolChart(ticker, tdata) {
   const ctx = document.getElementById('chart-vol-' + ticker);
   if (!ctx) return;
   if (charts[ticker + '_vol']) charts[ticker + '_vol'].destroy();
 
-  const labels = sigs.map(s => s.date);
-  const vols = sigs.map(s => (s.volume / 1e6));
-  const avgs = sigs.map(s => s.avg_volume ? (s.avg_volume / 1e6) : null);
-  const barColors = sigs.map(s => COLORS[s.signal] + '99' || '#5c6bc099');
+  const ph = tdata.price_history;
+  const sigs = tdata.signals || [];
+
+  const labels = ph ? ph.dates : sigs.map(s => s.date);
+  const vols = ph ? ph.volume.map(v => v / 1e6) : sigs.map(s => s.volume / 1e6);
+
+  // Compute 20-day rolling average from full volume series
+  const avgLine = vols.map((_, i) => {
+    const window = vols.slice(Math.max(0, i - 19), i + 1);
+    return parseFloat((window.reduce((a, b) => a + b, 0) / window.length).toFixed(2));
+  });
+
+  // Color bars by signal on signal dates, else default blue
+  const sigMap = {};
+  sigs.forEach(s => { sigMap[s.date] = s.signal; });
+  const barColors = labels.map(d => sigMap[d] ? COLORS[sigMap[d]] + '99' : '#5c6bc099');
 
   charts[ticker + '_vol'] = new Chart(ctx, {
     type: 'bar',
@@ -323,7 +364,7 @@ function renderVolChart(ticker, sigs) {
         },
         {
           label: '20d Avg (M)',
-          data: avgs,
+          data: avgLine,
           borderColor: COLORS.avgVol,
           borderWidth: 2,
           pointRadius: 0,

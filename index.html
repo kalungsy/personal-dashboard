@@ -42,13 +42,20 @@
   .header p { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
 
   /* Tabs */
-  .tabs { display: flex; background: var(--surface); border-bottom: 2px solid var(--border); sticky; position: sticky; top: 0; z-index: 100; }
+  .tabs { display: flex; flex-wrap: wrap; background: var(--surface); border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 100; }
   .tab-btn {
-    flex: 1; min-height: 48px; border: none; background: var(--tab-inactive); color: var(--text-dim);
-    font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
-    border-bottom: 3px solid transparent; padding: 0 8px;
+    flex: 1; min-width: 70px; min-height: 44px; border: none; background: var(--tab-inactive); color: var(--text-dim);
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+    border-bottom: 3px solid transparent; padding: 4px 4px 2px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   }
+  .tab-btn .tab-ticker { font-size: 13px; font-weight: 700; }
+  .tab-btn .tab-signal { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.5px; }
+  .tab-signal-BUY  { background: rgba(38,201,108,0.2);  color: var(--buy); }
+  .tab-signal-SELL { background: rgba(239,83,80,0.2);   color: var(--sell); }
+  .tab-signal-HOLD { background: rgba(255,167,38,0.2);  color: var(--hold); }
   .tab-btn.active { background: var(--tab-active); color: #fff; border-bottom-color: var(--accent); }
+  .tab-btn.active .tab-signal { opacity: 0.9; }
   .tab-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
 
   /* Panels */
@@ -115,19 +122,16 @@
   <p id="updated-time">Loading…</p>
 </div>
 
-<div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('UNH')" id="tab-UNH">UNH</button>
-  <button class="tab-btn" onclick="switchTab('MSFT')" id="tab-MSFT">MSFT</button>
-  <button class="tab-btn" onclick="switchTab('AAPL')" id="tab-AAPL">AAPL</button>
+<div class="tabs" id="tab-bar">
+  <!-- Tabs injected by JS after data loads -->
 </div>
 
-<div id="panel-UNH" class="panel active"><div class="loading">Loading data…</div></div>
-<div id="panel-MSFT" class="panel"><div class="loading">Loading data…</div></div>
-<div id="panel-AAPL" class="panel"><div class="loading">Loading data…</div></div>
+<div id="panels-container"></div>
 
 <script>
+const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL'];
 let allData = {};
-let activeTab = 'UNH';
+let activeTab = 'CVX';
 const charts = {};
 
 const COLORS = {
@@ -138,10 +142,11 @@ const COLORS = {
 function switchTab(ticker) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + ticker).classList.add('active');
-  document.getElementById('panel-' + ticker).classList.add('active');
+  const tb = document.getElementById('tab-' + ticker);
+  const pn = document.getElementById('panel-' + ticker);
+  if (tb) tb.classList.add('active');
+  if (pn) pn.classList.add('active');
   activeTab = ticker;
-  // Resize chart if needed
   if (charts[ticker + '_price']) charts[ticker + '_price'].resize();
   if (charts[ticker + '_vol']) charts[ticker + '_vol'].resize();
 }
@@ -149,8 +154,32 @@ function switchTab(ticker) {
 function fmt(n) { return n != null ? '$' + Number(n).toFixed(2) : 'N/A'; }
 function fmtVol(n) { return n != null ? (n / 1e6).toFixed(1) + 'M' : 'N/A'; }
 
+function buildTabs(data) {
+  const bar = document.getElementById('tab-bar');
+  bar.innerHTML = '';
+  const cont = document.getElementById('panels-container');
+  cont.innerHTML = '';
+  TICKERS.forEach((t, i) => {
+    const td = data[t] || { ticker: t, signals: [] };
+    const latest = td.signals && td.signals.length > 0 ? td.signals[td.signals.length - 1] : null;
+    const sig = latest ? latest.signal : 'HOLD';
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.id = 'tab-' + t;
+    btn.onclick = () => switchTab(t);
+    btn.innerHTML = `<span class="tab-ticker">${t}</span><span class="tab-signal tab-signal-${sig}">${sig}</span>`;
+    bar.appendChild(btn);
+    const panel = document.createElement('div');
+    panel.id = 'panel-' + t;
+    panel.className = 'panel' + (i === 0 ? ' active' : '');
+    panel.innerHTML = '<div class="loading">Loading…</div>';
+    cont.appendChild(panel);
+  });
+}
+
 function renderTicker(ticker, tdata) {
   const panel = document.getElementById('panel-' + ticker);
+  if (!panel) return;
   const sigs = tdata.signals || [];
   const latest = sigs.length > 0 ? sigs[sigs.length - 1] : null;
 
@@ -221,7 +250,6 @@ function renderTicker(ticker, tdata) {
 
   panel.innerHTML = html;
 
-  // Render charts if we have data
   if (sigs.length > 0 || tdata.price_history) {
     renderPriceChart(ticker, tdata);
     renderVolChart(ticker, tdata);
@@ -236,7 +264,6 @@ function renderPriceChart(ticker, tdata) {
   const ph = tdata.price_history;
   const sigs = tdata.signals || [];
 
-  // Use full price history if available, else fall back to signals
   const labels = ph ? ph.dates : sigs.map(s => s.date);
   const closes = ph ? ph.close : sigs.map(s => s.close);
   const boxTop = ph ? ph.box_top : (sigs[0]?.box_top ?? null);
@@ -244,7 +271,6 @@ function renderPriceChart(ticker, tdata) {
   const tops = labels.map(() => boxTop);
   const bots = labels.map(() => boxBot);
 
-  // Signal dots: sparse array — value only on signal dates, null elsewhere
   const sigMap = {};
   sigs.forEach(s => { sigMap[s.date] = { close: s.close, signal: s.signal }; });
   const dotData = labels.map(d => sigMap[d] ? sigMap[d].close : null);
@@ -255,71 +281,18 @@ function renderPriceChart(ticker, tdata) {
     data: {
       labels,
       datasets: [
-        {
-          label: 'Box Ceiling',
-          data: tops,
-          borderColor: COLORS.boxTop,
-          borderWidth: 1.5,
-          borderDash: [6, 4],
-          pointRadius: 0,
-          fill: false,
-          tension: 0,
-          order: 3
-        },
-        {
-          label: 'Box Floor',
-          data: bots,
-          borderColor: COLORS.boxBottom,
-          borderWidth: 1.5,
-          borderDash: [6, 4],
-          pointRadius: 0,
-          backgroundColor: 'rgba(38,201,108,0.07)',
-          fill: '-1',
-          tension: 0,
-          order: 4
-        },
-        {
-          label: 'Close Price',
-          data: closes,
-          borderColor: COLORS.price,
-          borderWidth: 2,
-          pointRadius: 0,
-          fill: false,
-          tension: 0.3,
-          order: 2
-        },
-        {
-          label: 'Signal',
-          data: dotData,
-          borderColor: 'transparent',
-          backgroundColor: dotColors,
-          pointRadius: labels.map(d => sigMap[d] ? 7 : 0),
-          pointBorderColor: dotColors,
-          pointBorderWidth: 2,
-          showLine: false,
-          fill: false,
-          order: 1
-        }
+        { label: 'Box Ceiling', data: tops, borderColor: COLORS.boxTop, borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, fill: false, tension: 0, order: 3 },
+        { label: 'Box Floor', data: bots, borderColor: COLORS.boxBottom, borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, backgroundColor: 'rgba(38,201,108,0.07)', fill: '-1', tension: 0, order: 4 },
+        { label: 'Close Price', data: closes, borderColor: COLORS.price, borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3, order: 2 },
+        { label: 'Signal', data: dotData, borderColor: 'transparent', backgroundColor: dotColors, pointRadius: labels.map(d => sigMap[d] ? 7 : 0), pointBorderColor: dotColors, pointBorderWidth: 2, showLine: false, fill: false, order: 1 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: {
-          labels: {
-            color: '#9197c0', font: { size: 12 }, boxWidth: 20, padding: 10,
-            filter: item => item.text !== 'Signal'
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              if (ctx.dataset.label === 'Signal' && ctx.raw === null) return null;
-              return ctx.dataset.label + ': $' + Number(ctx.raw).toFixed(2);
-            }
-          }
-        }
+        legend: { labels: { color: '#9197c0', font: { size: 12 }, boxWidth: 20, padding: 10, filter: item => item.text !== 'Signal' } },
+        tooltip: { callbacks: { label: ctx => { if (ctx.dataset.label === 'Signal' && ctx.raw === null) return null; return ctx.dataset.label + ': $' + Number(ctx.raw).toFixed(2); } } }
       },
       scales: {
         x: { ticks: { color: '#9197c0', maxTicksLimit: 8, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } },
@@ -340,13 +313,11 @@ function renderVolChart(ticker, tdata) {
   const labels = ph ? ph.dates : sigs.map(s => s.date);
   const vols = ph ? ph.volume.map(v => v / 1e6) : sigs.map(s => s.volume / 1e6);
 
-  // Compute 20-day rolling average from full volume series
   const avgLine = vols.map((_, i) => {
-    const window = vols.slice(Math.max(0, i - 19), i + 1);
-    return parseFloat((window.reduce((a, b) => a + b, 0) / window.length).toFixed(2));
+    const w = vols.slice(Math.max(0, i - 19), i + 1);
+    return parseFloat((w.reduce((a, b) => a + b, 0) / w.length).toFixed(2));
   });
 
-  // Color bars by signal on signal dates, else default blue
   const sigMap = {};
   sigs.forEach(s => { sigMap[s.date] = s.signal; });
   const barColors = labels.map(d => sigMap[d] ? COLORS[sigMap[d]] + '99' : '#5c6bc099');
@@ -356,23 +327,8 @@ function renderVolChart(ticker, tdata) {
     data: {
       labels,
       datasets: [
-        {
-          label: 'Volume (M)',
-          data: vols,
-          backgroundColor: barColors,
-          order: 2
-        },
-        {
-          label: '20d Avg (M)',
-          data: avgLine,
-          borderColor: COLORS.avgVol,
-          borderWidth: 2,
-          pointRadius: 0,
-          type: 'line',
-          fill: false,
-          tension: 0.3,
-          order: 1
-        }
+        { label: 'Volume (M)', data: vols, backgroundColor: barColors, order: 2 },
+        { label: '20d Avg (M)', data: avgLine, borderColor: COLORS.avgVol, borderWidth: 2, pointRadius: 0, type: 'line', fill: false, tension: 0.3, order: 1 }
       ]
     },
     options: {
@@ -395,18 +351,22 @@ async function loadData() {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     allData = await resp.json();
 
+    // Build tab bar + panels dynamically
+    buildTabs(allData);
+
     // Update timestamp
-    const times = ['UNH', 'MSFT', 'AAPL'].map(t => allData[t]?.last_updated).filter(Boolean);
+    const times = TICKERS.map(t => allData[t]?.last_updated).filter(Boolean);
     document.getElementById('updated-time').textContent = times.length ? 'Last updated: ' + times[times.length - 1] : 'No recent update';
 
-    ['UNH', 'MSFT', 'AAPL'].forEach(t => {
+    TICKERS.forEach(t => {
       const td = allData[t] || { ticker: t, signals: [] };
       renderTicker(t, td);
     });
+
+    // Start on first ticker
+    switchTab(TICKERS[0]);
   } catch (err) {
-    ['UNH', 'MSFT', 'AAPL'].forEach(t => {
-      document.getElementById('panel-' + t).innerHTML = `<div class="error-msg">⚠️ Could not load signals.json: ${err.message}</div>`;
-    });
+    document.getElementById('panels-container').innerHTML = `<div style="padding:20px"><div class="error-msg">⚠️ Could not load signals.json: ${err.message}</div></div>`;
     document.getElementById('updated-time').textContent = 'Error loading data';
   }
 }

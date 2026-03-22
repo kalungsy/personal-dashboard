@@ -1,27 +1,39 @@
 {
-  "ticker": "UNH",
-  "last_updated": "2026-03-21 21:29",
-  "signals": [
-    {
-      "date": "2026-03-21",
-      "close": 278.77,
-      "signal": "HOLD",
-      "reason": "Price ($278.77) is inside the box ($274.50\u2013$287.57). High volume warning: mounting selling pressure \u2014 watch for a breakdown below $274.50.",
-      "box_top": 287.57,
-      "box_bottom": 274.5,
-      "volume": 38890000,
-      "avg_volume": 9810000,
-      "note": "Data sourced via web search; yfinance unavailable in sandbox (pip proxy blocked)."
-    },
-    {
-      "date": "2026-03-20",
-      "close": 275.59,
-      "signal": "HOLD",
-      "reason": "Price ($275.59) is inside the box ($264.24-$355.11). Wait for a breakout.",
-      "box_top": 355.11,
-      "box_bottom": 264.24,
-      "volume": 38938167,
-      "avg_volume": 9081633
-    }
-  ]
+  "UNH": {
+    "ticker": "UNH",
+    "last_updated": "",
+    "signals": []
+  },
+  "MSFT": {
+    "ticker": "MSFT",
+    "last_updated": "2026-03-21 19:54",
+    "signals": [
+      {
+        "date": "2026-03-20",
+        "close": 381.87,
+        "signal": "HOLD",
+        "reason": "Price ($381.87) is inside the box ($380.12\u2013$489.68). Wait for a breakout.",
+        "box_top": 489.68,
+        "box_bottom": 380.12,
+        "volume": 50771400,
+        "avg_volume": 34168595
+      }
+    ]
+  },
+  "AAPL": {
+    "ticker": "AAPL",
+    "last_updated": "2026-03-21 19:54",
+    "signals": [
+      {
+        "date": "2026-03-20",
+        "close": 247.99,
+        "signal": "HOLD",
+        "reason": "Price ($247.99) is inside the box ($246.00\u2013$280.91). Wait for a breakout.",
+        "box_top": 280.91,
+        "box_bottom": 246.0,
+        "volume": 88268000,
+        "avg_volume": 41490260
+      }
+    ]
+  }
 }

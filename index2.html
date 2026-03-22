@@ -55,7 +55,105 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .tab-signal-HOLD { background: rgba(255,167,38,0.18); color: var(--hold); }
 
 /* ===== PANELS ===== */
-.panels-container { padding: 16px; max-width: 960px; marginass="header">
+.panels-container { padding: 16px; max-width: 960px; margin: 0 auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ===== SIGNAL CARD ===== */
+.signal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.signal-top { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.signal-badge { font-size: 22px; font-weight: 800; border-radius: 8px; padding: 4px 18px; letter-spacing: 1px; }
+.badge-BUY { background: rgba(38,201,108,0.15); color: var(--buy); border: 1.5px solid rgba(38,201,108,0.4); }
+.badge-SELL { background: rgba(239,83,80,0.15); color: var(--sell); border: 1.5px solid rgba(239,83,80,0.4); }
+.badge-HOLD { background: rgba(255,167,38,0.15); color: var(--hold); border: 1.5px solid rgba(255,167,38,0.4); }
+.signal-right { flex: 1; }
+.signal-reason { font-size: 14px; color: var(--text); line-height: 1.5; }
+.signal-date { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.confidence-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.confidence-stars { font-size: 16px; }
+.confidence-label { font-size: 12px; color: var(--text-dim); }
+
+/* ===== STATUS PILLS ===== */
+.status-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.status-pill { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+.pill-ok { background: rgba(38,201,108,0.12); color: var(--buy); border: 1px solid rgba(38,201,108,0.3); }
+.pill-warn { background: rgba(255,167,38,0.12); color: var(--hold); border: 1px solid rgba(255,167,38,0.3); }
+.pill-bad { background: rgba(239,83,80,0.12); color: var(--sell); border: 1px solid rgba(239,83,80,0.3); }
+.pill-info { background: rgba(99,102,241,0.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+
+/* ===== BOX STATS ===== */
+.box-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+.stat-label { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+.stat-value { font-size: 16px; font-weight: 700; }
+.stat-value.up { color: var(--buy); }
+.stat-value.down { color: var(--sell); }
+.stat-value.neutral { color: var(--hold); }
+.stat-value.default { color: var(--text); }
+
+/* ===== COUNTS ===== */
+.counts-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.count-card { flex: 1; border-radius: 8px; padding: 10px; text-align: center; }
+.count-BUY { background: rgba(38,201,108,0.1); border: 1px solid rgba(38,201,108,0.25); }
+.count-SELL { background: rgba(239,83,80,0.1); border: 1px solid rgba(239,83,80,0.25); }
+.count-HOLD { background: rgba(255,167,38,0.1); border: 1px solid rgba(255,167,38,0.25); }
+.count-num { font-size: 20px; font-weight: 800; }
+.count-BUY .count-num { color: var(--buy); }
+.count-SELL .count-num { color: var(--sell); }
+.count-HOLD .count-num { color: var(--hold); }
+.count-lbl { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+/* ===== CHARTS ===== */
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.range-btns { display: flex; gap: 4px; }
+.range-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); padding: 3px 9px; border-radius: 5px; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+.range-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+.range-btn:hover:not(.active) { background: #334155; color: var(--text); }
+.chart-wrap { height: 220px; }
+
+/* ===== HISTORY TABLE ===== */
+.history-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; overflow-x: auto; }
+.history-title { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-bottom: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { color: var(--text-dim); font-weight: 600; text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+td { padding: 6px 8px; border-bottom: 1px solid rgba(45,63,94,0.5); }
+tr:last-child td { border-bottom: none; }
+.sig-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.sig-BUY { background: rgba(38,201,108,0.15); color: var(--buy); }
+.sig-SELL { background: rgba(239,83,80,0.15); color: var(--sell); }
+.sig-HOLD { background: rgba(255,167,38,0.15); color: var(--hold); }
+
+/* ===== ALGO EXPLAIN ===== */
+.algo-explain { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 12px; margin-bottom: 12px; font-size: 12px; color: var(--text-dim); line-height: 1.7; }
+.algo-explain strong { color: #a5b4fc; }
+
+/* ===== LOADING / ERROR ===== */
+.loading { color: var(--text-dim); font-size: 14px; padding: 30px; text-align: center; }
+.error-msg { background: rgba(239,83,80,0.1); border: 1px solid rgba(239,83,80,0.3); color: #fca5a5; border-radius: 8px; padding: 12px; font-size: 13px; }
+.skeleton { background: var(--surface2); border-radius: 6px; height: 14px; margin: 8px 0; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .panels-container { padding: 10px; }
+  .box-stats { grid-template-columns: 1fr 1fr; }
+  .chart-wrap { height: 180px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<div class="top-nav">
+  <span class="nav-label">Dashboard:</span>
+  <a href="index.html">Standard</a>
+  <a href="index2.html" class="active">Enhanced ↗</a>
+</div>
+
+<!-- Header -->
+<div class="header">
   <div class="header-row">
     <h1>📦 Enhanced Darvas Box Dashboard</h1>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">

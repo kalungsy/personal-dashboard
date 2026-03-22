@@ -75,6 +75,10 @@
   .signal-date { font-size: 13px; color: var(--text-dim); }
   .signal-no-data { font-size: 15px; color: var(--text-dim); padding: 12px 0; }
 
+  /* Box explanation callout */
+  .box-explain { font-size: 12px; color: var(--text-dim); background: var(--surface2); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; border-left: 3px solid var(--accent); line-height: 1.6; }
+  .box-explain strong { color: var(--text); }
+
   /* Box Stats */
   .box-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
   .stat-card { background: var(--surface); border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
@@ -95,8 +99,19 @@
 
   /* Charts */
   .chart-card { background: var(--surface); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); }
-  .chart-title { font-size: 14px; font-weight: 600; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .chart-title { font-size: 14px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
   .chart-wrap { position: relative; height: 220px; width: 100%; }
+
+  /* Range buttons */
+  .range-btns { display: flex; gap: 4px; }
+  .range-btn {
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s; letter-spacing: 0.3px;
+  }
+  .range-btn:hover { border-color: var(--accent); color: var(--text); }
+  .range-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
   /* History table */
   .history-card { background: var(--surface); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); overflow-x: auto; }
@@ -133,6 +148,14 @@ const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL'];
 let allData = {};
 let activeTab = 'CVX';
 const charts = {};
+const chartRanges = {}; // per-ticker selected range
+
+const RANGES = [
+  { label: '3D', days: 3 },
+  { label: '1W', days: 5 },
+  { label: '1M', days: 21 },
+  { label: '3M', days: 999 }
+];
 
 const COLORS = {
   BUY: '#26c96c', SELL: '#ef5350', HOLD: '#ffa726',
@@ -153,6 +176,27 @@ function switchTab(ticker) {
 
 function fmt(n) { return n != null ? '$' + Number(n).toFixed(2) : 'N/A'; }
 function fmtVol(n) { return n != null ? (n / 1e6).toFixed(1) + 'M' : 'N/A'; }
+
+function setRange(ticker, rangeLabel) {
+  chartRanges[ticker] = rangeLabel;
+  // Update active state on range buttons
+  RANGES.forEach(r => {
+    const btn = document.getElementById(`range-${ticker}-${r.label}`);
+    if (btn) btn.classList.toggle('active', r.label === rangeLabel);
+  });
+  // Re-render both charts with new range
+  const tdata = allData[ticker];
+  if (tdata) {
+    renderPriceChart(ticker, tdata, rangeLabel);
+    renderVolChart(ticker, tdata, rangeLabel);
+  }
+}
+
+function sliceByRange(labels, rangeLabel) {
+  const r = RANGES.find(x => x.label === rangeLabel) || RANGES[RANGES.length - 1];
+  const n = Math.min(r.days, labels.length);
+  return labels.length - n; // start index
+}
 
 function buildTabs(data) {
   const bar = document.getElementById('tab-bar');
@@ -186,6 +230,11 @@ function renderTicker(ticker, tdata) {
   let counts = { BUY: 0, SELL: 0, HOLD: 0 };
   sigs.forEach(s => { if (counts[s.signal] !== undefined) counts[s.signal]++; });
 
+  // Build range button HTML (shared by both charts)
+  const rangeBtns = RANGES.map(r =>
+    `<button id="range-${ticker}-${r.label}" class="range-btn${r.label === '3M' ? ' active' : ''}" onclick="setRange('${ticker}','${r.label}')">${r.label}</button>`
+  ).join('');
+
   let html = '';
 
   // Signal card
@@ -199,6 +248,16 @@ function renderTicker(ticker, tdata) {
     html += '<div class="signal-no-data">⚠️ No signal data available for ' + ticker + '.</div>';
   }
   html += '</div>';
+
+  // Box explanation
+  html += `<div class="box-explain">
+    <strong>How the box is determined:</strong> The algorithm scans for a <strong>3-day confirmation rule</strong> —
+    a peak high is set as the box ceiling once 3 consecutive days' highs don't exceed it.
+    The floor is the lowest low while price stayed inside the box.
+    A <strong>BUY</strong> fires when today's close breaks <em>above</em> the ceiling;
+    a <strong>SELL</strong> fires when it breaks <em>below</em> the floor.
+    Use the range buttons below to zoom into the 3-day breakout window.
+  </div>`;
 
   // Box stats
   html += '<div class="box-stats">';
@@ -217,13 +276,16 @@ function renderTicker(ticker, tdata) {
   html += `<div class="count-card count-HOLD"><div class="count-num">${counts.HOLD}</div><div class="count-lbl">HOLD</div></div>`;
   html += '</div>';
 
-  // Price chart
+  // Price chart (with range buttons)
   html += `<div class="chart-card">
-    <div class="chart-title">Price &amp; Darvas Box</div>
+    <div class="chart-header">
+      <div class="chart-title">Price &amp; Darvas Box</div>
+      <div class="range-btns">${rangeBtns}</div>
+    </div>
     <div class="chart-wrap"><canvas id="chart-price-${ticker}"></canvas></div>
   </div>`;
 
-  // Volume chart
+  // Volume chart (no separate range buttons — shares same range)
   html += `<div class="chart-card">
     <div class="chart-title">Volume</div>
     <div class="chart-wrap"><canvas id="chart-vol-${ticker}"></canvas></div>
@@ -251,12 +313,13 @@ function renderTicker(ticker, tdata) {
   panel.innerHTML = html;
 
   if (sigs.length > 0 || tdata.price_history) {
-    renderPriceChart(ticker, tdata);
-    renderVolChart(ticker, tdata);
+    const range = chartRanges[ticker] || '3M';
+    renderPriceChart(ticker, tdata, range);
+    renderVolChart(ticker, tdata, range);
   }
 }
 
-function renderPriceChart(ticker, tdata) {
+function renderPriceChart(ticker, tdata, rangeLabel) {
   const ctx = document.getElementById('chart-price-' + ticker);
   if (!ctx) return;
   if (charts[ticker + '_price']) charts[ticker + '_price'].destroy();
@@ -264,10 +327,15 @@ function renderPriceChart(ticker, tdata) {
   const ph = tdata.price_history;
   const sigs = tdata.signals || [];
 
-  const labels = ph ? ph.dates : sigs.map(s => s.date);
-  const closes = ph ? ph.close : sigs.map(s => s.close);
+  const allLabels = ph ? ph.dates : sigs.map(s => s.date);
+  const allCloses = ph ? ph.close : sigs.map(s => s.close);
   const boxTop = ph ? ph.box_top : (sigs[0]?.box_top ?? null);
   const boxBot = ph ? ph.box_bottom : (sigs[0]?.box_bottom ?? null);
+
+  // Slice to selected range
+  const start = sliceByRange(allLabels, rangeLabel || '3M');
+  const labels = allLabels.slice(start);
+  const closes = allCloses.slice(start);
   const tops = labels.map(() => boxTop);
   const bots = labels.map(() => boxBot);
 
@@ -276,6 +344,9 @@ function renderPriceChart(ticker, tdata) {
   const dotData = labels.map(d => sigMap[d] ? sigMap[d].close : null);
   const dotColors = labels.map(d => sigMap[d] ? COLORS[sigMap[d].signal] : 'transparent');
 
+  // For 3D view, show every point; for longer ranges limit tick density
+  const maxTicks = labels.length <= 5 ? labels.length : 8;
+
   charts[ticker + '_price'] = new Chart(ctx, {
     type: 'line',
     data: {
@@ -283,7 +354,7 @@ function renderPriceChart(ticker, tdata) {
       datasets: [
         { label: 'Box Ceiling', data: tops, borderColor: COLORS.boxTop, borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, fill: false, tension: 0, order: 3 },
         { label: 'Box Floor', data: bots, borderColor: COLORS.boxBottom, borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, backgroundColor: 'rgba(38,201,108,0.07)', fill: '-1', tension: 0, order: 4 },
-        { label: 'Close Price', data: closes, borderColor: COLORS.price, borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3, order: 2 },
+        { label: 'Close Price', data: closes, borderColor: COLORS.price, borderWidth: 2, pointRadius: labels.length <= 5 ? 4 : 0, fill: false, tension: 0.3, order: 2 },
         { label: 'Signal', data: dotData, borderColor: 'transparent', backgroundColor: dotColors, pointRadius: labels.map(d => sigMap[d] ? 7 : 0), pointBorderColor: dotColors, pointBorderWidth: 2, showLine: false, fill: false, order: 1 }
       ]
     },
@@ -295,14 +366,14 @@ function renderPriceChart(ticker, tdata) {
         tooltip: { callbacks: { label: ctx => { if (ctx.dataset.label === 'Signal' && ctx.raw === null) return null; return ctx.dataset.label + ': $' + Number(ctx.raw).toFixed(2); } } }
       },
       scales: {
-        x: { ticks: { color: '#9197c0', maxTicksLimit: 8, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } },
+        x: { ticks: { color: '#9197c0', maxTicksLimit: maxTicks, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } },
         y: { ticks: { color: '#9197c0', callback: v => '$' + v, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } }
       }
     }
   });
 }
 
-function renderVolChart(ticker, tdata) {
+function renderVolChart(ticker, tdata, rangeLabel) {
   const ctx = document.getElementById('chart-vol-' + ticker);
   if (!ctx) return;
   if (charts[ticker + '_vol']) charts[ticker + '_vol'].destroy();
@@ -310,17 +381,26 @@ function renderVolChart(ticker, tdata) {
   const ph = tdata.price_history;
   const sigs = tdata.signals || [];
 
-  const labels = ph ? ph.dates : sigs.map(s => s.date);
-  const vols = ph ? ph.volume.map(v => v / 1e6) : sigs.map(s => s.volume / 1e6);
+  const allLabels = ph ? ph.dates : sigs.map(s => s.date);
+  const allVols = ph ? ph.volume.map(v => v / 1e6) : sigs.map(s => s.volume / 1e6);
 
-  const avgLine = vols.map((_, i) => {
-    const w = vols.slice(Math.max(0, i - 19), i + 1);
+  // Slice to selected range
+  const start = sliceByRange(allLabels, rangeLabel || '3M');
+  const labels = allLabels.slice(start);
+  const vols = allVols.slice(start);
+
+  // 20d avg still computed over full history, then sliced
+  const fullAvgLine = allVols.map((_, i) => {
+    const w = allVols.slice(Math.max(0, i - 19), i + 1);
     return parseFloat((w.reduce((a, b) => a + b, 0) / w.length).toFixed(2));
   });
+  const avgLine = fullAvgLine.slice(start);
 
   const sigMap = {};
   sigs.forEach(s => { sigMap[s.date] = s.signal; });
   const barColors = labels.map(d => sigMap[d] ? COLORS[sigMap[d]] + '99' : '#5c6bc099');
+
+  const maxTicks = labels.length <= 5 ? labels.length : 8;
 
   charts[ticker + '_vol'] = new Chart(ctx, {
     type: 'bar',
@@ -338,7 +418,7 @@ function renderVolChart(ticker, tdata) {
         tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + Number(ctx.raw).toFixed(1) + 'M' } }
       },
       scales: {
-        x: { ticks: { color: '#9197c0', maxTicksLimit: 8, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } },
+        x: { ticks: { color: '#9197c0', maxTicksLimit: maxTicks, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } },
         y: { ticks: { color: '#9197c0', callback: v => v + 'M', font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } }
       }
     }
@@ -350,6 +430,9 @@ async function loadData() {
     const resp = await fetch('signals.json?v=' + Date.now());
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     allData = await resp.json();
+
+    // Default range for all tickers
+    TICKERS.forEach(t => { chartRanges[t] = '3M'; });
 
     // Build tab bar + panels dynamically
     buildTabs(allData);

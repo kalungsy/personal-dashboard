@@ -144,7 +144,7 @@
 <div id="panels-container"></div>
 
 <script>
-const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL'];
+const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL','SOUN','ACHR','ROKU','IONQ'];
 let allData = {};
 let activeTab = 'CVX';
 const charts = {};
@@ -286,7 +286,7 @@ function renderTicker(ticker, tdata) {
   </div>`;
 
   // Volume chart (no separate range buttons — shares same range)
-  html += `<div class="chart-card">
+  html += `<div clas="chart-card">
     <div class="chart-title">Volume</div>
     <div class="chart-wrap"><canvas id="chart-vol-${ticker}"></canvas></div>
   </div>`;
@@ -379,7 +379,7 @@ function renderVolChart(ticker, tdata, rangeLabel) {
   if (charts[ticker + '_vol']) charts[ticker + '_vol'].destroy();
 
   const ph = tdata.price_history;
-  const sigs = tdata.signals || [];
+ const sigs = tdata.signals || [];
 
   const allLabels = ph ? ph.dates : sigs.map(s => s.date);
   const allVols = ph ? ph.volume.map(v => v / 1e6) : sigs.map(s => s.volume / 1e6);

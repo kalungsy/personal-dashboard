@@ -204,7 +204,8 @@ async function fetchYahooData(ticker, forceRefresh = false) {
       try { return JSON.parse(cached); } catch(e) {}
     }
   }
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=6mo`;
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=6mo`;
+  const url = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
   const r = await fetch(url);
   if (!r.ok) throw new Error(`HTTP ${r.status} for ${ticker}`);
   const j = await r.json();

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enhanced Darvas Box Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #263247;
+  --border: #2d3f5e;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --buy: #26c96c;
+  --sell: #ef5350;
+  --hold: #ffa726;
+  --sma: #f59e0b;
+  --price: #7986cb;
+  --vol: #5c6bc0;
+  --avgvol: #ff7043;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+/* ===== NAV ===== */
+.top-nav { background: #1e293b; padding: 8px 16px; display: flex; gap: 16px; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.top-nav .nav-label { color: #94a3b8; font-size: 13px; }
+.top-nav a { font-size: 13px; font-weight: 600; text-decoration: none; color: #94a3b8; }
+.top-nav a.active { color: #6366f1; }
+.top-nav a:hover { color: #e2e8f0; }
+
+/* ===== HEADER ===== */
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 16px; }
+.header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.header h1 { font-size: 18px; font-weight: 700; color: #c7d2fe; }
+.header-meta { font-size: 12px; color: var(--text-dim); }
+.refresh-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.refresh-btn:hover { background: #334155; color: var(--text); }
+.refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== TABS ===== */
+.tab-bar-wrap { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 10px 0; overflow-x: auto; white-space: nowrap; }
+.tab-bar { display: inline-flex; gap: 4px; }
+.tab-btn { background: transparent; border: none; border-bottom: 3px solid transparent; padding: 6px 10px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all 0.15s; border-radius: 6px 6px 0 0; min-width: 64px; }
+.tab-btn:hover { background: rgba(99,102,241,0.08); }
+.tab-btn.active { border-bottom-color: #6366f1; background: rgba(99,102,241,0.12); }
+.tab-ticker { font-size: 13px; font-weight: 700; color: var(--text); }
+.tab-signal { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 6px; }
+.tab-signal-BUY { background: rgba(38,201,108,0.18); color: var(--buy); }
+.tab-signal-SELL { background: rgba(239,83,80,0.18); color: var(--sell); }
+.tab-signal-HOLD { background: rgba(255,167,38,0.18); color: var(--hold); }
+
+/* ===== PANELS ===== */
+.panels-container { padding: 16px; max-width: 960px; marginass="header">
+  <div class="header-row">
+    <h1>📦 Enhanced Darvas Box Dashboard</h1>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="header-meta" id="updated-time">Loading…</span>
+      <button class="refresh-btn" id="refresh-btn" onclick="refreshAll()">🔄 Refresh</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tab bar -->
+<div class="tab-bar-wrap">
+  <div class="tab-bar" id="tab-bar"></div>
+</div>
+
+<!-- Panels -->
+<div class="panels-container" id="panels-container">
+  <div class="loading">Fetching live market data…</div>
+</div>
+
+<script>
+const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL','SOUN','ACHR','ROKU','IONQ'];
+const COLORS = {
+  BUY: '#26c96c', SELL: '#ef5350', HOLD: '#ffa726',
+  price: '#7986cb', sma50: '#f59e0b',
+  boxTop: '#26c96c', boxBot: '#ef5350',
+  volume: '#5c6bc0', avgVol: '#ff7043'
+};
+const RANGES = [
+  { label: '3D', days: 3 },
+  { label: '1W', days: 5 },
+  { label: '1M', days: 21 },
+  { label: '3M', days: 999 }
+];
+
+let allData = {};  // ticker -> computed result
+let charts = {};
+let chartRanges = {};
+let activeTab = TICKERS[0];
+
+// ──────────────────────────────────────────────
+//  DATA FETCHING
+// ──────────────────────────────────────────────
+async function fetchYahooData(ticker, forceRefresh = false) {
+  const key = 'yf_' + ticker;
+  if (!forceRefresh) {
+    const cached = sessionStorage.getItem(key);
+    if (cached) {
+      try { return JSON.parse(cached); } catch(e) {}
+    }
+  }
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=6mo`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status} for ${ticker}`);
+  const j = await r.json();
+  const chart = j.chart?.result?.[0];
+  if (!chart) throw new Error(`No data for ${ticker}`);
+  const timestamps = chart.timestamp;
+  const q = chart.indicators.quote[0];
+  const dates = timestamps.map(ts => {
+    const d = new Date(ts * 1000);
+    return d.toISOString().slice(0, 10);
+  });
+  const result = {
+    ticker,
+    dates,
+    opens: q.open,
+    highs: q.high,
+    lows: q.low,
+    closes: q.close,
+    volumes: q.volume
+  };
+  // Filter out nulls (some days have null OHLCV)
+  const valid = result.dates.map((d, i) => ({
+    date: d,
+    open: result.opens[i],
+    high: result.highs[i],
+    low: result.lows[i],
+    close: result.closes[i],
+    volume: result.volumes[i]
+  })).filter(r => r.close != null && r.high != null && r.low != null);
+  const out = {
+    ticker,
+    dates: valid.map(r => r.date),
+    opens: valid.map(r => r.open),
+    highs: valid.map(r => r.high),
+    lows: valid.map(r => r.low),
+    closes: valid.map(r => r.close),
+    volumes: valid.map(r => r.volume)
+  };
+  sessionStorage.setItem(key, JSON.stringify(out));
+  return out;
+}
+
+// ──────────────────────────────────────────────
+//  INDICATORS
+// ──────────────────────────────────────────────
+function sma(arr, period) {
+  return arr.map((_, i) => {
+    if (i < period - 1) return null;
+    const slice = arr.slice(i - period + 1, i + 1).filter(v => v != null);
+    if (slice.length < period) return null;
+    return slice.reduce((a, b) => a + b, 0) / period;
+  });
+}
+
+function rollingAvg(arr, period) {
+  return arr.map((_, i) => {
+    const slice = arr.slice(Math.max(0, i - period + 1), i + 1).filter(v => v != null);
+    return slice.length ? slice.reduce((a, b) => a + b, 0) / slice.length : null;
+  });
+}
+
+// ──────────────────────────────────────────────
+//  ENHANCED DARVAS BOX ALGORITHM
+// ──────────────────────────────────────────────
+function computeEnhancedDarvas(data) {
+  const { dates, highs, lows, closes, volumes } = data;
+  const n = closes.length;
+  if (n < 55) return null;
+
+  const sma50 = sma(closes, 50);
+  const sma20 = sma(closes, 20);
+  const avgVol20 = rollingAvg(volumes, 20);
+
+  // Per-day output arrays
+  const boxTops = new Array(n).fill(null);
+  const boxBots = new Array(n).fill(null);
+  const signals = [];    // { date, signal, close, box_top, box_bottom, confidence, reason, vol_ratio }
+  const dailyBoxTop = new Array(n).fill(null);
+  const dailyBoxBot = new Array(n).fill(null);
+
+  let boxCeiling = null;
+  let boxFloor = null;
+  let candidateCeiling = null;
+  let candidateDays = 0;
+  const BOX_CONFIRM = 3;    // consecutive days within 1% of candidate ceiling
+  const COOLDOWN = 10;      // trading days
+  let cooldownLeft = 0;
+  let inBox = false;
+
+  for (let i = 1; i < n; i++) {
+    const h = highs[i];
+    const l = lows[i];
+    const c = closes[i];
+    const v = volumes[i];
+    const av = avgVol20[i];
+    const trendOk = sma50[i] != null && c > sma50[i];
+    const volOk = av != null && v > 1.2 * av;
+    const volRatio = av ? (v / av) : null;
+
+    if (cooldownLeft > 0) cooldownLeft--;
+
+    // ── Build / confirm the box ceiling ──
+    if (candidateCeiling === null) {
+      candidateCeiling = h;
+      candidateDays = 1;
+    } else {
+      // new high exceeds candidate → reset
+      if (h > candidateCeiling * 1.01) {
+        candidateCeiling = h;
+        candidateDays = 1;
+      } else if (Math.abs(h - candidateCeiling) / candidateCeiling <= 0.01) {
+        // Within 1% → confirm
+        candidateDays++;
+        candidateCeiling = Math.max(candidateCeiling, h); // take the max within the band
+      } else {
+        candidateDays++;  // h is below ceiling → counts toward confirmation
+      }
+    }
+
+    const ceilingReady = candidateDays >= BOX_CONFIRM;
+
+    // Lock box if ceiling is newly confirmed and no active signal
+    if (ceilingReady && boxCeiling === null) {
+      boxCeiling = candidateCeiling;
+      // Floor = lowest low in the lookback window where price was below ceiling
+      const lookback = Math.max(0, i - 20);
+      let floor = lows[i];
+      for (let k = lookback; k <= i; k++) {
+        if (lows[k] < floor && highs[k] <= boxCeiling * 1.01) floor = lows[k];
+      }
+      boxFloor = floor;
+      inBox = true;
+    }
+
+    // Update floor while inside box
+    if (inBox && boxCeiling !== null) {
+      if (l < boxFloor) boxFloor = l;
+    }
+
+    // ── Signal detection ──
+    if (inBox && boxCeiling !== null) {
+      if (c > boxCeiling) {
+        // Potential BUY
+        if (trendOk && volOk && cooldownLeft === 0) {
+          // Compute confidence
+          const spread = (boxCeiling - boxFloor) / boxFloor;
+          let conf = 0;
+          if (spread <= 0.03) conf += 2;
+          else if (spread <= 0.05) conf += 1;
+          if (volRatio >= 1.5) conf += 2;
+          else if (volRatio >= 1.2) conf += 1;
+          if (trendOk) conf += 1;
+          conf = Math.max(1, Math.min(5, conf));
+
+          const reason = `Price (${fmt(c)}) broke ABOVE box ceiling (${fmt(boxCeiling)}). ` +
+            `Volume ${(volRatio).toFixed(2)}x avg. Above 50d SMA.`;
+          signals.push({ date: dates[i], signal: 'BUY', close: c, box_top: boxCeiling, box_bottom: boxFloor, confidence: conf, reason, vol_ratio: volRatio });
+          dailyBoxTop[i] = boxCeiling;
+          dailyBoxBot[i] = boxFloor;
+          // Reset box after BUY — look for new formation
+          boxCeiling = null; boxFloor = null; inBox = false;
+          candidateCeiling = h; candidateDays = 1;
+        } else {
+          // BUY suppressed
+          let reason = `Price (${fmt(c)}) above ceiling (${fmt(boxCeiling)}) but`;
+          const suppressReasons = [];
+          if (!trendOk) suppressReasons.push('below 50d SMA');
+          if (!volOk) suppressReasons.push(`low volume (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})`);
+          if (cooldownLeft > 0) suppressReasons.push(`cooldown (${cooldownLeft} days left)`);
+          reason += ' ' + suppressReasons.join(', ') + '.';
+          signals.push({ date: dates[i], signal: 'HOLD', close: c, box_top: boxCeiling, box_bottom: boxFloor, confidence: 1, reason, vol_ratio: volRatio });
+          dailyBoxTop[i] = boxCeiling;
+          dailyBoxBot[i] = boxFloor;
+        }
+      } else if (c < boxFloor) {
+        // SELL
+        const reason = `Price (${fmt(c)}) broke BELOW box floor (${fmt(boxFloor)}). Exiting position.`;
+        signals.push({ date: dates[i], signal: 'SELL', close: c, box_top: boxCeiling, box_bottom: boxFloor, confidence: 3, reason, vol_ratio: volRatio });
+        dailyBoxTop[i] = boxCeiling;
+        dailyBoxBot[i] = boxFloor;
+        cooldownLeft = COOLDOWN;
+        boxCeiling = null; boxFloor = null; inBox = false;
+        candidateCeiling = h; candidateDays = 1;
+      } else {
+        // HOLD inside box
+        dailyBoxTop[i] = boxCeiling;
+        dailyBoxBot[i] = boxFloor;
+      }
+    }
+  }
+
+  // Latest state
+  const latest = signals.length > 0 ? signals[signals.length - 1] : null;
+
+  // Build running box for chart (last confirmed box)
+  let runTop = null, runBot = null;
+  const chartBoxTop = new Array(n).fill(null);
+  const chartBoxBot = new Array(n).fill(null);
+  for (let i = 0; i < n; i++) {
+    if (dailyBoxTop[i] !== null) { runTop = dailyBoxTop[i]; runBot = dailyBoxBot[i]; }
+    chartBoxTop[i] = runTop;
+    chartBoxBot[i] = runBot;
+  }
+
+  // Current box (latest)
+  let currentBoxTop = null, currentBoxBot = null;
+  for (let i = n - 1; i >= 0; i--) {
+    if (chartBoxTop[i] !== null) { currentBoxTop = chartBoxTop[i]; currentBoxBot = chartBoxBot[i]; break; }
+  }
+
+  return {
+    ticker: data.ticker,
+    dates: data.dates,
+    closes: data.closes,
+    volumes: data.volumes,
+    sma50,
+    sma20,
+    avgVol20,
+    chartBoxTop,
+    chartBoxBot,
+    currentBoxTop,
+    currentBoxBot,
+    signals,
+    latest,
+    cooldownLeft
+  };
+}
+
+// ──────────────────────────────────────────────
+//  HELPERS
+// ──────────────────────────────────────────────
+function fmt(n) { return n != null ? '$' + Number(n).toFixed(2) : 'N/A'; }
+function fmtVol(n) { return n != null ? (n / 1e6).toFixed(1) + 'M' : 'N/A'; }
+function stars(n) { return '⭐'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n)); }
+function sliceByRange(arr, rangeLabel) {
+  const r = RANGES.find(x => x.label === rangeLabel) || RANGES[RANGES.length - 1];
+  const n = Math.min(r.days, arr.length);
+  return arr.length - n;
+}
+
+// ──────────────────────────────────────────────
+//  UI — TAB SWITCHING
+// ──────────────────────────────────────────────
+function switchTab(ticker) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const tb = document.getElementById('tab-' + ticker);
+  const pn = document.getElementById('panel-' + ticker);
+  if (tb) tb.classList.add('active');
+  if (pn) pn.classList.add('active');
+  activeTab = ticker;
+  if (charts[ticker + '_price']) charts[ticker + '_price'].resize();
+  if (charts[ticker + '_vol']) charts[ticker + '_vol'].resize();
+}
+
+function setRange(ticker, rangeLabel) {
+  chartRanges[ticker] = rangeLabel;
+  RANGES.forEach(r => {
+    const btn = document.getElementById(`range-${ticker}-${r.label}`);
+    if (btn) btn.classList.toggle('active', r.label === rangeLabel);
+  });
+  const d = allData[ticker];
+  if (d) { renderPriceChart(ticker, d, rangeLabel); renderVolChart(ticker, d, rangeLabel); }
+}
+
+// ──────────────────────────────────────────────
+//  UI — BUILD TABS SKELETON
+// ──────────────────────────────────────────────
+function buildTabsSkeleton() {
+  const bar = document.getElementById('tab-bar');
+  bar.innerHTML = '';
+  const cont = document.getElementById('panels-container');
+  cont.innerHTML = '';
+  TICKERS.forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.id = 'tab-' + t;
+    btn.onclick = () => switchTab(t);
+    btn.innerHTML = `<span class="tab-ticker">${t}</span><span class="tab-signal tab-signal-HOLD">···</span>`;
+    bar.appendChild(btn);
+    const panel = document.createElement('div');
+    panel.id = 'panel-' + t;
+    panel.className = 'panel' + (i === 0 ? ' active' : '');
+    panel.innerHTML = `<div class="loading">⏳ Fetching ${t} data…<br><div class="skeleton" style="width:60%;margin:16px auto"></div><div class="skeleton" style="width:80%;margin:8px auto"></div></div>`;
+    cont.appendChild(panel);
+  });
+}
+
+// ──────────────────────────────────────────────
+//  UI — RENDER TICKER CARD
+// ──────────────────────────────────────────────
+function renderCard(ticker, result) {
+  const panel = document.getElementById('panel-' + ticker);
+  if (!panel) return;
+  const { dates, closes, volumes, sma50, avgVol20, chartBoxTop, chartBoxBot,
+          currentBoxTop, currentBoxBot, signals, latest, cooldownLeft } = result;
+  const n = closes.length;
+
+  // Update tab
+  const tb = document.getElementById('tab-' + ticker);
+  if (tb && latest) {
+    tb.querySelector('.tab-signal').textContent = latest.signal;
+    tb.querySelector('.tab-signal').className = `tab-signal tab-signal-${latest.signal}`;
+  }
+
+  const counts = { BUY: 0, SELL: 0, HOLD: 0 };
+  signals.forEach(s => { if (counts[s.signal] !== undefined) counts[s.signal]++; });
+
+  const latestVol = volumes[n - 1];
+  const latestAvgVol = avgVol20[n - 1];
+  const volRatio = latestAvgVol ? (latestVol / latestAvgVol) : null;
+  const latestSma = sma50[n - 1];
+  const latestClose = closes[n - 1];
+  const trendOk = latestSma != null && latestClose > latestSma;
+  const volOk = volRatio != null && volRatio > 1.2;
+
+  const rangeBtns = RANGES.map(r =>
+    `<button id="range-${ticker}-${r.label}" class="range-btn${r.label === '3M' ? ' active' : ''}" onclick="setRange('${ticker}','${r.label}')">${r.label}</button>`
+  ).join('');
+
+  let html = '';
+
+  // ── Signal card ──
+  html += '<div class="signal-card">';
+  html += '<div class="signal-top">';
+  if (latest) {
+    const conf = latest.confidence || 1;
+    html += `<div class="signal-badge badge-${latest.signal}">${latest.signal}</div>`;
+    html += '<div class="signal-right">';
+    html += `<div class="signal-reason">${latest.reason}</div>`;
+    html += `<div class="signal-date">📅 ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
+    html += `<div class="confidence-row">
+      <span class="confidence-stars" title="Confidence: ${conf}/5">${stars(conf)}</span>
+      <span class="confidence-label">Signal Confidence ${conf}/5</span>
+    </div>`;
+    html += '</div>';
+  } else {
+    html += '<div style="color:var(--text-dim);font-size:14px">⚠️ No signals generated yet (insufficient data or no breakout).</div>';
+  }
+  html += '</div>';
+
+  // Status pills
+  html += '<div class="status-row">';
+  html += trendOk
+    ? `<span class="status-pill pill-ok">✅ Above 50d SMA</span>`
+    : `<span class="status-pill pill-warn">⚠️ Below 50d SMA</span>`;
+  html += volOk
+    ? `<span class="status-pill pill-ok">✅ Volume confirmed (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`
+    : `<span class="status-pill pill-warn">⚠️ Low volume (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`;
+  if (cooldownLeft > 0) {
+    html += `<span class="status-pill pill-bad">🔒 Re-entry cooldown: ${cooldownLeft} days remaining</span>`;
+  }
+  html += '</div>';
+  html += '</div>'; // signal-card
+
+  // ── Algorithm explain ──
+  html += `<div class="algo-explain">
+    <strong>Enhanced Algorithm:</strong> Box ceiling locked after <strong>3 consecutive days</strong> where high varies &lt;1%.
+    BUY requires: price &gt; 50d SMA + volume &gt;1.2× 20d avg. 10-day re-entry cooldown after SELL.
+    Confidence score (1–5) based on box tightness, volume ratio and trend alignment.
+  </div>`;
+
+  // ── Box stats ──
+  html += '<div class="box-stats">';
+  html += `<div class="stat-card"><div class="stat-label">📈 Box Ceiling</div><div class="stat-value up">${fmt(currentBoxTop)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">📉 Box Floor</div><div class="stat-value down">${fmt(currentBoxBot)}</div></div>`;
+  const tightness = (currentBoxTop && currentBoxBot) ? ((currentBoxTop - currentBoxBot) / currentBoxBot * 100).toFixed(1) + '%' : 'N/A';
+  html += `<div class="stat-card"><div class="stat-label">📐 Box Tightness</div><div class="stat-value default">${tightness}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">📊 Vol Ratio (20d)</div><div class="stat-value ${volOk ? 'up' : 'neutral'}">${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">📉 50d SMA</div><div class="stat-value ${trendOk ? 'up' : 'down'}">${fmt(latestSma)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">💹 Latest Close</div><div class="stat-value default">${fmt(latestClose)}</div></div>`;
+  html += '</div>';
+
+  // ── Signal counts ──
+  html += '<div class="counts-row">';
+  html += `<div class="count-card count-BUY"><div class="count-num">${counts.BUY}</div><div class="count-lbl">BUY</div></div>`;
+  html += `<div class="count-card count-SELL"><div class="count-num">${counts.SELL}</div><div class="count-lbl">SELL</div></div>`;
+  html += `<div class="count-card count-HOLD"><div class="count-num">${counts.HOLD}</div><div class="count-lbl">HOLD</div></div>`;
+  html += '</div>';
+
+  // ── Price chart ──
+  html += `<div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title">Price &amp; Darvas Box + 50d SMA</div>
+      <div class="range-btns">${rangeBtns}</div>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-price-${ticker}"></canvas></div>
+  </div>`;
+
+  // ── Volume chart ──
+  html += `<div class="chart-card">
+    <div class="chart-header"><div class="chart-title">Volume</div></div>
+    <div class="chart-wrap"><canvas id="chart-vol-${ticker}"></canvas></div>
+  </div>`;
+
+  // ── Signal history ──
+  html += '<div class="history-card"><div class="history-title">Signal History</div>';
+  if (signals.length === 0) {
+    html += '<p style="color:var(--text-dim);font-size:13px">No signals generated yet.</p>';
+  } else {
+    html += '<table><thead><tr><th>Date</th><th>Signal</th><th>Close</th><th>Box Range</th><th>Confidence</th><th>Vol Ratio</th></tr></thead><tbody>';
+    const sorted = [...signals].reverse().slice(0, 30);
+    sorted.forEach(s => {
+      html += `<tr>
+        <td>${s.date}</td>
+        <td><span class="sig-pill sig-${s.signal}">${s.signal}</span></td>
+        <td>${fmt(s.close)}</td>
+        <td>${fmt(s.box_bottom)} – ${fmt(s.box_top)}</td>
+        <td title="${s.confidence}/5">${stars(s.confidence)}</td>
+        <td>${s.vol_ratio ? s.vol_ratio.toFixed(2) + 'x' : 'N/A'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
+  panel.innerHTML = html;
+
+  // Render charts
+  const range = chartRanges[ticker] || '3M';
+  renderPriceChart(ticker, result, range);
+  renderVolChart(ticker, result, range);
+}
+
+// ──────────────────────────────────────────────
+//  CHARTS
+// ──────────────────────────────────────────────
+function renderPriceChart(ticker, result, rangeLabel) {
+  const ctx = document.getElementById('chart-price-' + ticker);
+  if (!ctx) return;
+  if (charts[ticker + '_price']) { charts[ticker + '_price'].destroy(); delete charts[ticker + '_price']; }
+
+  const { dates, closes, sma50, chartBoxTop, chartBoxBot, signals } = result;
+  const start = sliceByRange(dates, rangeLabel);
+  const labels = dates.slice(start);
+  const closeSlice = closes.slice(start);
+  const smaSlice = sma50.slice(start);
+  const topSlice = chartBoxTop.slice(start);
+  const botSlice = chartBoxBot.slice(start);
+
+  const sigMap = {};
+  signals.forEach(s => { sigMap[s.date] = s; });
+  const dotData = labels.map(d => sigMap[d] ? sigMap[d].close : null);
+  const dotColors = labels.map(d => sigMap[d] ? COLORS[sigMap[d].signal] : 'transparent');
+  const maxTicks = labels.length <= 5 ? labels.length : 8;
+
+  charts[ticker + '_price'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Box Ceiling', data: topSlice, borderColor: COLORS.boxTop, borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, fill: false, tension: 0, order: 5 },
+        { label: 'Box Floor', data: botSlice, borderColor: COLORS.boxBot, borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, backgroundColor: 'rgba(38,201,108,0.06)', fill: '-1', tension: 0, order: 6 },
+        { label: '50d SMA', data: smaSlice, borderColor: COLORS.sma50, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3, order: 3 },
+        { label: 'Close Price', data: closeSlice, borderColor: COLORS.price, borderWidth: 2, pointRadius: labels.length <= 5 ? 4 : 0, fill: false, tension: 0.3, order: 2 },
+        { label: 'Signal', data: dotData, borderColor: 'transparent', backgroundColor: dotColors, pointRadius: labels.map(d => sigMap[d] ? 7 : 0), pointBorderColor: dotColors, pointBorderWidth: 2, showLine: false, fill: false, order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#9197c0', font: { size: 12 }, boxWidth: 20, padding: 10, filter: item => item.text !== 'Signal' } },
+        tooltip: { callbacks: { label: ctx => {
+          if (ctx.dataset.label === 'Signal' && ctx.raw === null) return null;
+          return ctx.dataset.label + ': ' + (ctx.raw != null ? '$' + Number(ctx.raw).toFixed(2) : 'N/A');
+        }}}
+      },
+      scales: {
+        x: { ticks: { color: '#9197c0', maxTicksLimit: maxTicks, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } },
+        y: { ticks: { color: '#9197c0', callback: v => '$' + v, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } }
+      }
+    }
+  });
+}
+
+function renderVolChart(ticker, result, rangeLabel) {
+  const ctx = document.getElementById('chart-vol-' + ticker);
+  if (!ctx) return;
+  if (charts[ticker + '_vol']) { charts[ticker + '_vol'].destroy(); delete charts[ticker + '_vol']; }
+
+  const { dates, volumes, avgVol20, signals } = result;
+  const start = sliceByRange(dates, rangeLabel);
+  const labels = dates.slice(start);
+  const vols = volumes.slice(start).map(v => v / 1e6);
+  const avgLine = avgVol20.slice(start).map(v => v ? v / 1e6 : null);
+
+  const sigMap = {};
+  signals.forEach(s => { sigMap[s.date] = s.signal; });
+  const barColors = labels.map(d => sigMap[d] ? COLORS[sigMap[d]] + '99' : '#5c6bc099');
+  const maxTicks = labels.length <= 5 ? labels.length : 8;
+
+  charts[ticker + '_vol'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Volume (M)', data: vols, backgroundColor: barColors, order: 2 },
+        { label: '20d Avg (M)', data: avgLine, borderColor: COLORS.avgVol, borderWidth: 2, pointRadius: 0, type: 'line', fill: false, tension: 0.3, order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#9197c0', font: { size: 12 }, boxWidth: 20, padding: 10 } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + Number(ctx.raw).toFixed(1) + 'M' } }
+      },
+      scales: {
+        x: { ticks: { color: '#9197c0', maxTicksLimit: maxTicks, font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } },
+        y: { ticks: { color: '#9197c0', callback: v => v + 'M', font: { size: 11 } }, grid: { color: 'rgba(150,150,200,0.1)' } }
+      }
+    }
+  });
+}
+
+// ──────────────────────────────────────────────
+//  MAIN LOAD
+// ──────────────────────────────────────────────
+let isLoading = false;
+
+async function loadTicker(ticker, forceRefresh = false) {
+  try {
+    const raw = await fetchYahooData(ticker, forceRefresh);
+    const result = computeEnhancedDarvas(raw);
+    if (!result) {
+      document.getElementById('panel-' + ticker).innerHTML =
+        '<div class="error-msg">⚠️ Insufficient data for ' + ticker + ' (need 55+ trading days).</div>';
+      return;
+    }
+    allData[ticker] = result;
+    chartRanges[ticker] = chartRanges[ticker] || '3M';
+    renderCard(ticker, result);
+  } catch (err) {
+    const panel = document.getElementById('panel-' + ticker);
+    if (panel) panel.innerHTML = `<div class="error-msg">⚠️ Failed to load ${ticker}: ${err.message}</div>`;
+    const tb = document.getElementById('tab-' + ticker);
+    if (tb) { tb.querySelector('.tab-signal').textContent = 'ERR'; tb.querySelector('.tab-signal').className = 'tab-signal tab-signal-SELL'; }
+  }
+}
+
+async function refreshAll() {
+  if (isLoading) return;
+  isLoading = true;
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true; btn.textContent = '⏳ Loading…';
+  document.getElementById('updated-time').textContent = 'Refreshing…';
+  sessionStorage.clear();
+  buildTabsSkeleton();
+  await Promise.all(TICKERS.map(t => loadTicker(t, true)));
+  switchTab(TICKERS[0]);
+  document.getElementById('updated-time').textContent = 'Last updated: ' + new Date().toLocaleString();
+  btn.disabled = false; btn.textContent = '🔄 Refresh';
+  isLoading = false;
+}
+
+async function init() {
+  buildTabsSkeleton();
+  // Load all tickers concurrently
+  const start = Date.now();
+  await Promise.all(TICKERS.map(t => loadTicker(t)));
+  switchTab(TICKERS[0]);
+  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+  document.getElementById('updated-time').textContent =
+    'Last updated: ' + new Date().toLocaleString() + ` (${elapsed}s)`;
+  isLoading = false;
+}
+
+init();
+</script>
+</body>
+</html>

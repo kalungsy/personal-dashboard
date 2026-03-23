@@ -443,8 +443,8 @@ function getCurrentSignal(rsi, sma, closes, signals) {
   const lastSignal = signals.length > 0 ? signals[signals.length - 1] : null;
 
   if (lastRSI == null || lastSMA == null || lastClose == null) return 'HOLD';
-  if (lastRSI < 30 && lastClose > lastSMA) return 'BUY';
-  if (lastRSI > 70 && lastClose < lastSMA) return 'SELL';
+  if (lastRSI < 30) return 'BUY';
+  if (lastRSI > 70) return 'SELL';
   // Also show BUY if last signal was BUY and RSI < 50 (still in recovery)
   if (lastSignal && lastSignal.type === 'BUY' && lastRSI < 50) return 'BUY';
   return 'HOLD';

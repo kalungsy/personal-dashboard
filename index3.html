@@ -30,7 +30,7 @@ body {
   padding-bottom: 40px;
 }
 
-/* ── NAV ── */
+/* ââ NAV ââ */
 .nav-bar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -59,7 +59,7 @@ body {
   border: 1px solid var(--border);
 }
 
-/* ── HEADER ── */
+/* ââ HEADER ââ */
 .page-header {
   padding: 20px 16px 12px;
   display: flex;
@@ -101,7 +101,7 @@ body {
 .refresh-btn:hover { background: #334155; }
 .refresh-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-/* ── LOADING / ERROR ── */
+/* ââ LOADING / ERROR ââ */
 .loading-overlay {
   text-align: center;
   padding: 60px 20px;
@@ -117,7 +117,7 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── LEADERBOARD TABLE ── */
+/* ââ LEADERBOARD TABLE ââ */
 .section-label {
   padding: 6px 16px 8px;
   font-size: 12px;
@@ -198,7 +198,7 @@ table.leaderboard tr:hover { background: var(--surface2); }
 
 .trend-arrow { font-size: 14px; }
 
-/* ── BADGES ROW ── */
+/* ââ BADGES ROW ââ */
 .badges-row {
   display: flex;
   gap: 8px;
@@ -217,7 +217,7 @@ table.leaderboard tr:hover { background: var(--surface2); }
 .badge-ticker.leader { background: rgba(38,201,108,.2); color: var(--buy); border: 1px solid rgba(38,201,108,.3); }
 .badge-ticker.laggard { background: rgba(239,83,80,.2); color: var(--sell); border: 1px solid rgba(239,83,80,.3); }
 
-/* ── DETAIL CARDS ── */
+/* ââ DETAIL CARDS ââ */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -289,7 +289,7 @@ table.leaderboard tr:hover { background: var(--surface2); }
 
 .chart-section { position: relative; height: 70px; }
 
-/* ── RESPONSIVE ── */
+/* ââ RESPONSIVE ââ */
 @media (max-width: 480px) {
   .cards-grid { grid-template-columns: 1fr; }
   .page-header h1 { font-size: 17px; }
@@ -303,6 +303,7 @@ table.leaderboard tr:hover { background: var(--surface2); }
   <a href="index.html">Standard</a>
   <a href="index2.html">Enhanced</a>
   <a href="index3.html" class="active">RS Ranking</a>
+  <a href="index4.html">RSI</a>
 </nav>
 
 <!-- HEADER -->
@@ -312,15 +313,15 @@ table.leaderboard tr:hover { background: var(--surface2); }
     <div class="subtitle">12 tickers ranked by RS Score vs S&amp;P 500 benchmark</div>
   </div>
   <div class="header-right">
-    <span class="last-updated" id="lastUpdated">Loading…</span>
-    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">⟳ Refresh</button>
+    <span class="last-updated" id="lastUpdated">Loadingâ¦</span>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">â³ Refresh</button>
   </div>
 </div>
 
 <!-- LOADING -->
 <div id="loadingEl" class="loading-overlay">
   <div class="spinner"></div>
-  <div>Fetching data for 13 tickers…</div>
+  <div>Fetching data for 13 tickersâ¦</div>
 </div>
 
 <!-- MAIN CONTENT (hidden until loaded) -->
@@ -330,7 +331,7 @@ table.leaderboard tr:hover { background: var(--surface2); }
   <div class="badges-row" id="badgesRow"></div>
 
   <!-- LEADERBOARD TABLE -->
-  <div class="section-label">📊 Leaderboard</div>
+  <div class="section-label">ð Leaderboard</div>
   <div class="table-wrap">
     <table class="leaderboard">
       <thead>
@@ -352,7 +353,7 @@ table.leaderboard tr:hover { background: var(--surface2); }
   </div>
 
   <!-- DETAIL CARDS -->
-  <div class="section-label" style="margin-top:8px">📈 Ticker Detail</div>
+  <div class="section-label" style="margin-top:8px">ð Ticker Detail</div>
   <div class="cards-grid" id="cardsGrid"></div>
 
 </div>
@@ -436,7 +437,7 @@ function getSignal(score, rolling) {
 }
 
 function fmt(v, digits=1) {
-  if (v == null) return '—';
+  if (v == null) return 'â';
   const s = (v >= 0 ? '+' : '') + v.toFixed(digits) + '%';
   return s;
 }
@@ -454,12 +455,12 @@ function buildBadgesRow(ranked) {
   const el = document.getElementById('badgesRow');
   el.innerHTML = `
     <div class="badge-group">
-      <div class="badge-label">🏆 Leaders</div>
+      <div class="badge-label">ð Leaders</div>
       <div class="badge-tickers">${leaders.map(t=>`<span class="badge-ticker leader">${t.ticker}</span>`).join('')}</div>
     </div>
     <div style="flex:1"></div>
     <div class="badge-group">
-      <div class="badge-label">🔻 Laggards</div>
+      <div class="badge-label">ð» Laggards</div>
       <div class="badge-tickers">${laggards.map(t=>`<span class="badge-ticker laggard">${t.ticker}</span>`).join('')}</div>
     </div>
   `;
@@ -471,8 +472,8 @@ function buildTable(ranked) {
     const rank = i + 1;
     const rankClass = rank <= 3 ? 'top' : rank >= 10 ? 'bottom' : '';
     const rowClass = d.signal === 'BUY' ? 'row-buy' : d.signal === 'SELL' ? 'row-sell' : '';
-    const sigEmoji = d.signal === 'BUY' ? '🟢' : d.signal === 'SELL' ? '🔴' : '🟡';
-    const trendArrow = d.trending ? '↑' : d.trendingDown ? '↓' : '→';
+    const sigEmoji = d.signal === 'BUY' ? 'ð¢' : d.signal === 'SELL' ? 'ð´' : 'ð¡';
+    const trendArrow = d.trending ? 'â' : d.trendingDown ? 'â' : 'â';
     const trendColor = d.trending ? 'pos' : d.trendingDown ? 'neg' : 'neu';
     const vsspy = d.rs.score;
     return `<tr class="${rowClass}">
@@ -515,10 +516,10 @@ function buildCards(ranked, spyCloses) {
   grid.innerHTML = '';
   ranked.forEach((d, i) => {
     const rank = i + 1;
-    const sigEmoji = d.signal === 'BUY' ? '🟢' : d.signal === 'SELL' ? '🔴' : '🟡';
+    const sigEmoji = d.signal === 'BUY' ? 'ð¢' : d.signal === 'SELL' ? 'ð´' : 'ð¡';
     const rsClass = d.rs.score > 0 ? 'pos' : d.rs.score < 0 ? 'neg' : 'neu';
     const momClass = d.trending ? 'up' : d.trendingDown ? 'down' : 'flat';
-    const momText = d.trending ? '↑ Strengthening' : d.trendingDown ? '↓ Weakening' : '→ Neutral';
+    const momText = d.trending ? 'â Strengthening' : d.trendingDown ? 'â Weakening' : 'â Neutral';
 
     const card = document.createElement('div');
     card.className = 'detail-card';
@@ -540,7 +541,7 @@ function buildCards(ranked, spyCloses) {
           <span class="momentum-val ${momClass}">${momText}</span>
         </div>
         <div class="perf-section">
-          <div class="perf-title">Performance vs SPY <span style="color:#7986cb">■</span> Ticker <span style="color:#546e7a">■</span> SPY</div>
+          <div class="perf-title">Performance vs SPY <span style="color:#7986cb">â </span> Ticker <span style="color:#546e7a">â </span> SPY</div>
           <div class="perf-bars" id="bars-${d.ticker}">
             ${buildBars(d.closes, spyCloses, '1W', 5)}
             ${buildBars(d.closes, spyCloses, '1M', 21)}
@@ -628,7 +629,7 @@ async function loadAll() {
   const loading = document.getElementById('loadingEl');
   const main = document.getElementById('mainContent');
   btn.disabled = true;
-  btn.textContent = '⟳ Loading…';
+  btn.textContent = 'â³ Loadingâ¦';
   loading.style.display = 'block';
   main.style.display = 'none';
 
@@ -670,12 +671,12 @@ async function loadAll() {
     loading.style.display = 'none';
     main.style.display = 'block';
   } catch (err) {
-    loading.innerHTML = `<div style="color:#ef5350;font-size:14px">⚠️ Error loading data: ${err.message}</div>
+    loading.innerHTML = `<div style="color:#ef5350;font-size:14px">â ï¸ Error loading data: ${err.message}</div>
       <button class="refresh-btn" style="margin-top:12px" onclick="loadAll()">Retry</button>`;
     console.error(err);
   } finally {
     btn.disabled = false;
-    btn.textContent = '⟳ Refresh';
+    btn.textContent = 'â³ Refresh';
   }
 }
 

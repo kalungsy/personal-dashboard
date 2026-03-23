@@ -157,10 +157,10 @@ tr:last-child td { border-bottom: none; }
 <!-- Header -->
 <div class="header">
   <div class="header-row">
-    <h1>📦 Enhanced Darvas Box Dashboard</h1>
+    <h1> Enhanced Darvas Box Dashboard</h1>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <span class="header-meta" id="updated-time">Loading…</span>
-      <button class="refresh-btn" id="refresh-btn" onclick="refreshAll()">🔄 Refresh</button>
+      <button class="refresh-btn" id="refresh-btn" onclick="refreshAll()"> Refresh</button>
     </div>
   </div>
 </div>
@@ -176,7 +176,7 @@ tr:last-child td { border-bottom: none; }
 </div>
 
 <script>
-const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL','SOUN','ACHR','ROKU','IONQ'];
+const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL','SOUN','ACHR','ROKU','IONQ', 'RBLX', 'PATH', 'ACN', 'CRM', 'ORCL', 'QCOM', 'GLD', 'LMT'];
 const COLORS = {
   BUY: '#26c96c', SELL: '#ef5350', HOLD: '#ffa726',
   price: '#7986cb', sma50: '#f59e0b',
@@ -441,7 +441,7 @@ function computeEnhancedDarvas(data) {
 // ──────────────────────────────────────────────
 function fmt(n) { return n != null ? '$' + Number(n).toFixed(2) : 'N/A'; }
 function fmtVol(n) { return n != null ? (n / 1e6).toFixed(1) + 'M' : 'N/A'; }
-function stars(n) { return '⭐'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n)); }
+function stars(n) { return '★'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n)); }
 function sliceByRange(arr, rangeLabel) {
   const r = RANGES.find(x => x.label === rangeLabel) || RANGES[RANGES.length - 1];
   const n = Math.min(r.days, arr.length);
@@ -538,27 +538,27 @@ function renderCard(ticker, result) {
     html += `<div class="signal-badge badge-${latest.signal}">${latest.signal}</div>`;
     html += '<div class="signal-right">';
     html += `<div class="signal-reason">${latest.reason}</div>`;
-    html += `<div class="signal-date">📅 ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
+    html += `<div class="signal-date"> ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
     html += `<div class="confidence-row">
       <span class="confidence-stars" title="Confidence: ${conf}/5">${stars(conf)}</span>
       <span class="confidence-label">Signal Confidence ${conf}/5</span>
     </div>`;
     html += '</div>';
   } else {
-    html += '<div style="color:var(--text-dim);font-size:14px">⚠️ No signals generated yet (insufficient data or no breakout).</div>';
+    html += '<div style="color:var(--text-dim);font-size:14px">! No signals generated yet (insufficient data or no breakout).</div>';
   }
   html += '</div>';
 
   // Status pills
   html += '<div class="status-row">';
   html += trendOk
-    ? `<span class="status-pill pill-ok">✅ Above 50d SMA</span>`
-    : `<span class="status-pill pill-warn">⚠️ Below 50d SMA</span>`;
+    ? `<span class="status-pill pill-ok">✓ Above 50d SMA</span>`
+    : `<span class="status-pill pill-warn">! Below 50d SMA</span>`;
   html += volOk
-    ? `<span class="status-pill pill-ok">✅ Volume confirmed (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`
-    : `<span class="status-pill pill-warn">⚠️ Low volume (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`;
+    ? `<span class="status-pill pill-ok">✓ Volume confirmed (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`
+    : `<span class="status-pill pill-warn">! Low volume (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`;
   if (cooldownLeft > 0) {
-    html += `<span class="status-pill pill-bad">🔒 Re-entry cooldown: ${cooldownLeft} days remaining</span>`;
+    html += `<span class="status-pill pill-bad">[lock] Re-entry cooldown: ${cooldownLeft} days remaining</span>`;
   }
   html += '</div>';
   html += '</div>'; // signal-card
@@ -572,13 +572,13 @@ function renderCard(ticker, result) {
 
   // ── Box stats ──
   html += '<div class="box-stats">';
-  html += `<div class="stat-card"><div class="stat-label">📈 Box Ceiling</div><div class="stat-value up">${fmt(currentBoxTop)}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">📉 Box Floor</div><div class="stat-value down">${fmt(currentBoxBot)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">[R] Box Ceiling</div><div class="stat-value up">${fmt(currentBoxTop)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label"> Box Floor</div><div class="stat-value down">${fmt(currentBoxBot)}</div></div>`;
   const tightness = (currentBoxTop && currentBoxBot) ? ((currentBoxTop - currentBoxBot) / currentBoxBot * 100).toFixed(1) + '%' : 'N/A';
-  html += `<div class="stat-card"><div class="stat-label">📐 Box Tightness</div><div class="stat-value default">${tightness}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">📊 Vol Ratio (20d)</div><div class="stat-value ${volOk ? 'up' : 'neutral'}">${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">📉 50d SMA</div><div class="stat-value ${trendOk ? 'up' : 'down'}">${fmt(latestSma)}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">💹 Latest Close</div><div class="stat-value default">${fmt(latestClose)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label"> Box Tightness</div><div class="stat-value default">${tightness}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">[S] Vol Ratio (20d)</div><div class="stat-value ${volOk ? 'up' : 'neutral'}">${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label"> 50d SMA</div><div class="stat-value ${trendOk ? 'up' : 'down'}">${fmt(latestSma)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label"> Latest Close</div><div class="stat-value default">${fmt(latestClose)}</div></div>`;
   html += '</div>';
 
   // ── Signal counts ──
@@ -734,7 +734,7 @@ async function loadTicker(ticker, forceRefresh = false) {
     const result = computeEnhancedDarvas(raw);
     if (!result) {
       document.getElementById('panel-' + ticker).innerHTML =
-        '<div class="error-msg">⚠️ Insufficient data for ' + ticker + ' (need 55+ trading days).</div>';
+        '<div class="error-msg">! Insufficient data for ' + ticker + ' (need 55+ trading days).</div>';
       return;
     }
     allData[ticker] = result;
@@ -742,7 +742,7 @@ async function loadTicker(ticker, forceRefresh = false) {
     renderCard(ticker, result);
   } catch (err) {
     const panel = document.getElementById('panel-' + ticker);
-    if (panel) panel.innerHTML = `<div class="error-msg">⚠️ Failed to load ${ticker}: ${err.message}</div>`;
+    if (panel) panel.innerHTML = `<div class="error-msg">! Failed to load ${ticker}: ${err.message}</div>`;
     const tb = document.getElementById('tab-' + ticker);
     if (tb) { tb.querySelector('.tab-signal').textContent = 'ERR'; tb.querySelector('.tab-signal').className = 'tab-signal tab-signal-SELL'; }
   }
@@ -759,7 +759,7 @@ async function refreshAll() {
   await Promise.all(TICKERS.map(t => loadTicker(t, true)));
   switchTab(TICKERS[0]);
   document.getElementById('updated-time').textContent = 'Last updated: ' + new Date().toLocaleString();
-  btn.disabled = false; btn.textContent = '🔄 Refresh';
+  btn.disabled = false; btn.textContent = ' Refresh';
   isLoading = false;
 }
 

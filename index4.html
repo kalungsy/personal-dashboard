@@ -461,7 +461,8 @@ function getRSIZone(rsiVal) {
 
 // ─── Fetch Yahoo Finance ──────────────────────────────────────────────────────
 async function fetchOHLCV(ticker) {
-  const url = `https://corsproxy.io/?url=https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=6mo`;
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=6mo`;
+  const url = `https://corsproxy.io/?url=${encodeURIComponent(yahooUrl)}`;
   const r = await fetch(url);
   const j = await r.json();
   if (!j.chart || !j.chart.result || !j.chart.result[0]) {

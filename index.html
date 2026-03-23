@@ -132,16 +132,16 @@
 </head>
 <body>
 <nav style="background:#1a1d2e;border-bottom:1px solid #2d3154;padding:8px 20px;display:flex;gap:16px;align-items:center">
-  <a href="index.html" style="color:#c9d1f0;text-decoration:none;font-size:13px;font-weight:600;padding:4px 12px;border-radius:6px;background:#2d3154">ð Standard</a>
-  <a href="index2.html" style="color:#9197c0;text-decoration:none;font-size:13px;padding:4px 12px;border-radius:6px">ð Enhanced â</a>
+  <a href="index.html" style="color:#c9d1f0;text-decoration:none;font-size:13px;font-weight:600;padding:4px 12px;border-radius:6px;background:#2d3154">📊 Standard</a>
+  <a href="index2.html" style="color:#9197c0;text-decoration:none;font-size:13px;padding:4px 12px;border-radius:6px">🚀 Enhanced ↗</a>
   <a href="index3.html">RS Ranking</a>
   <a href="index4.html">RSI</a>
 </nav>
 
 
 <div class="header">
-  <h1>Ã°ÂÂÂ¦ Darvas Box Dashboard</h1>
-  <p id="updated-time">LoadingÃ¢ÂÂ¦</p>
+  <h1>ð¦ Darvas Box Dashboard</h1>
+  <p id="updated-time">Loadingâ¦</p>
 </div>
 
 <div class="tabs" id="tab-bar">
@@ -223,7 +223,7 @@ function buildTabs(data) {
     const panel = document.createElement('div');
     panel.id = 'panel-' + t;
     panel.className = 'panel' + (i === 0 ? ' active' : '');
-    panel.innerHTML = '<div class="loading">LoadingÃ¢ÂÂ¦</div>';
+    panel.innerHTML = '<div class="loading">Loadingâ¦</div>';
     cont.appendChild(panel);
   });
 }
@@ -250,15 +250,15 @@ function renderTicker(ticker, tdata) {
     const sig = latest.signal;
     html += `<div class="signal-badge badge-${sig}">${sig}</div>`;
     html += `<div class="signal-reason">${latest.reason || ''}</div>`;
-    html += `<div class="signal-date">Ã°ÂÂÂ ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
+    html += `<div class="signal-date">ð ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
   } else {
-    html += '<div class="signal-no-data">Ã¢ÂÂ Ã¯Â¸Â No signal data available for ' + ticker + '.</div>';
+    html += '<div class="signal-no-data">â ï¸ No signal data available for ' + ticker + '.</div>';
   }
   html += '</div>';
 
   // Box explanation
   html += `<div class="box-explain">
-    <strong>How the box is determined:</strong> The algorithm scans for a <strong>3-day confirmation rule</strong> Ã¢ÂÂ
+    <strong>How the box is determined:</strong> The algorithm scans for a <strong>3-day confirmation rule</strong> â
     a peak high is set as the box ceiling once 3 consecutive days' highs don't exceed it.
     The floor is the lowest low while price stayed inside the box.
     A <strong>BUY</strong> fires when today's close breaks <em>above</em> the ceiling;
@@ -268,12 +268,12 @@ function renderTicker(ticker, tdata) {
 
   // Box stats
   html += '<div class="box-stats">';
-  html += `<div class="stat-card"><div class="stat-label">Ã°ÂÂÂ Box Ceiling</div><div class="stat-value up">${fmt(latest?.box_top)}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">Ã°ÂÂÂ Box Floor</div><div class="stat-value down">${fmt(latest?.box_bottom)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð Box Ceiling</div><div class="stat-value up">${fmt(latest?.box_top)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð Box Floor</div><div class="stat-value down">${fmt(latest?.box_bottom)}</div></div>`;
   const volRatio = latest && latest.avg_volume ? (latest.volume / latest.avg_volume).toFixed(2) : null;
   const vrClass = volRatio ? (volRatio >= 1.2 ? 'up' : volRatio < 0.8 ? 'down' : 'neutral') : '';
-  html += `<div class="stat-card"><div class="stat-label">Ã°ÂÂÂ Volume</div><div class="stat-value">${fmtVol(latest?.volume)}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">Ã°ÂÂÂ Vol Ratio vs 20d Avg</div><div class="stat-value ${vrClass}">${volRatio ? volRatio + 'x' : 'N/A'}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð Volume</div><div class="stat-value">${fmtVol(latest?.volume)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð Vol Ratio vs 20d Avg</div><div class="stat-value ${vrClass}">${volRatio ? volRatio + 'x' : 'N/A'}</div></div>`;
   html += '</div>';
 
   // Signal counts
@@ -292,7 +292,7 @@ function renderTicker(ticker, tdata) {
     <div class="chart-wrap"><canvas id="chart-price-${ticker}"></canvas></div>
   </div>`;
 
-  // Volume chart (no separate range buttons Ã¢ÂÂ shares same range)
+  // Volume chart (no separate range buttons â shares same range)
   html += `<div clas="chart-card">
     <div class="chart-title">Volume</div>
     <div class="chart-wrap"><canvas id="chart-vol-${ticker}"></canvas></div>
@@ -310,7 +310,7 @@ function renderTicker(ticker, tdata) {
         <td>${s.date}</td>
         <td><span class="sig-pill sig-${s.signal}">${s.signal}</span></td>
         <td>${fmt(s.close)}</td>
-        <td>${fmt(s.box_bottom)} Ã¢ÂÂ ${fmt(s.box_top)}</td>
+        <td>${fmt(s.box_bottom)} â ${fmt(s.box_top)}</td>
       </tr>`;
     });
     html += '</tbody></table>';
@@ -456,7 +456,7 @@ async function loadData() {
     // Start on first ticker
     switchTab(TICKERS[0]);
   } catch (err) {
-    document.getElementById('panels-container').innerHTML = `<div style="padding:20px"><div class="error-msg">Ã¢ÂÂ Ã¯Â¸Â Could not load signals.json: ${err.message}</div></div>`;
+    document.getElementById('panels-container').innerHTML = `<div style="padding:20px"><div class="error-msg">â ï¸ Could not load signals.json: ${err.message}</div></div>`;
     document.getElementById('updated-time').textContent = 'Error loading data';
   }
 }

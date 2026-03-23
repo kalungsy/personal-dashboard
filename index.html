@@ -132,15 +132,15 @@
 </head>
 <body>
 <nav style="background:#1a1d2e;border-bottom:1px solid #2d3154;padding:8px 20px;display:flex;gap:16px;align-items:center">
-  <a href="index.html" style="color:#c9d1f0;text-decoration:none;font-size:13px;font-weight:600;padding:4px 12px;border-radius:6px;background:#2d3154">📊 Standard</a>
-  <a href="index2.html" style="color:#9197c0;text-decoration:none;font-size:13px;padding:4px 12px;border-radius:6px">🚀 Enhanced ↗</a>
+  <a href="index.html" style="color:#c9d1f0;text-decoration:none;font-size:13px;font-weight:600;padding:4px 12px;border-radius:6px;background:#2d3154">[S] Standard</a>
+  <a href="index2.html" style="color:#9197c0;text-decoration:none;font-size:13px;padding:4px 12px;border-radius:6px">[+] Enhanced ↗</a>
   <a href="index3.html">RS Ranking</a>
   <a href="index4.html">RSI</a>
 </nav>
 
 
 <div class="header">
-  <h1>ð¦ Darvas Box Dashboard</h1>
+  <h1> Darvas Box Dashboard</h1>
   <p id="updated-time">Loadingâ¦</p>
 </div>
 
@@ -151,7 +151,7 @@
 <div id="panels-container"></div>
 
 <script>
-const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL','SOUN','ACHR','ROKU','IONQ'];
+const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL','SOUN','ACHR','ROKU','IONQ', 'RBLX', 'PATH', 'ACN', 'CRM', 'ORCL', 'QCOM', 'GLD', 'LMT'];
 let allData = {};
 let activeTab = 'CVX';
 const charts = {};
@@ -250,7 +250,7 @@ function renderTicker(ticker, tdata) {
     const sig = latest.signal;
     html += `<div class="signal-badge badge-${sig}">${sig}</div>`;
     html += `<div class="signal-reason">${latest.reason || ''}</div>`;
-    html += `<div class="signal-date">ð ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
+    html += `<div class="signal-date"> ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
   } else {
     html += '<div class="signal-no-data">â ï¸ No signal data available for ' + ticker + '.</div>';
   }
@@ -268,12 +268,12 @@ function renderTicker(ticker, tdata) {
 
   // Box stats
   html += '<div class="box-stats">';
-  html += `<div class="stat-card"><div class="stat-label">ð Box Ceiling</div><div class="stat-value up">${fmt(latest?.box_top)}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">ð Box Floor</div><div class="stat-value down">${fmt(latest?.box_bottom)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label"> Box Ceiling</div><div class="stat-value up">${fmt(latest?.box_top)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label"> Box Floor</div><div class="stat-value down">${fmt(latest?.box_bottom)}</div></div>`;
   const volRatio = latest && latest.avg_volume ? (latest.volume / latest.avg_volume).toFixed(2) : null;
   const vrClass = volRatio ? (volRatio >= 1.2 ? 'up' : volRatio < 0.8 ? 'down' : 'neutral') : '';
-  html += `<div class="stat-card"><div class="stat-label">ð Volume</div><div class="stat-value">${fmtVol(latest?.volume)}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">ð Vol Ratio vs 20d Avg</div><div class="stat-value ${vrClass}">${volRatio ? volRatio + 'x' : 'N/A'}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label"> Volume</div><div class="stat-value">${fmtVol(latest?.volume)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label"> Vol Ratio vs 20d Avg</div><div class="stat-value ${vrClass}">${volRatio ? volRatio + 'x' : 'N/A'}</div></div>`;
   html += '</div>';
 
   // Signal counts

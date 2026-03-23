@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSI Mean Reversion Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #263247;
+  --border: #2d3f5e;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --buy: #26c96c;
+  --sell: #ef5350;
+  --hold: #ffa726;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+  --oversold: #ef5350;
+  --recovering: #ffa726;
+  --neutral: #26c96c;
+  --overbought: #ff7043;
+  --rsi-purple: #a78bfa;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+/* NAV */
+.nav-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-bar a {
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.nav-bar a:hover { background: var(--surface2); color: var(--text); }
+.nav-bar a.active { background: rgba(167,139,250,0.15); color: var(--rsi-purple); }
+
+/* LAYOUT */
+.container { max-width: 1400px; margin: 0 auto; padding: 20px 16px; }
+
+/* SUMMARY SECTION */
+.summary-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+.summary-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.summary-stat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+.summary-stat .stat-num {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.summary-stat .stat-label { font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-oversold { color: var(--oversold); }
+.stat-overbought { color: var(--overbought); }
+.stat-buy { color: var(--buy); }
+.stat-hold { color: var(--hold); }
+
+.active-buys {
+  background: var(--surface2);
+  border: 1px solid rgba(38,201,108,0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.active-buys-label { font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.active-buy-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.buy-chip {
+  background: rgba(38,201,108,0.15);
+  border: 1px solid rgba(38,201,108,0.3);
+  color: var(--buy);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.no-buys { color: var(--text-dim); font-size: 0.85rem; font-style: italic; }
+
+/* LOADING */
+.loading-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+  text-align: center;
+  color: var(--text-dim);
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--rsi-purple);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* TICKER TABS */
+.tickers-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.ticker-tab {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  transition: all 0.15s;
+  position: relative;
+}
+.ticker-tab:hover { background: var(--surface2); color: var(--text); }
+.ticker-tab.active { background: rgba(167,139,250,0.2); border-color: var(--rsi-purple); color: var(--rsi-purple); }
+.ticker-tab .tab-signal {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.tab-signal.buy { background: var(--buy); }
+.tab-signal.sell { background: var(--sell); }
+.tab-signal.hold { background: var(--hold); }
+
+/* TICKER PANEL */
+.ticker-panel { display: none; }
+.ticker-panel.active { display: block; }
+
+/* SIGNAL CARD */
+.signal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 768px) { .signal-row { grid-template-columns: 1fr; } }
+
+.signal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.signal-card.buy-card { border-color: rgba(38,201,108,0.4); background: rgba(38,201,108,0.05); }
+.signal-card.sell-card { border-color: rgba(239,83,80,0.4); background: rgba(239,83,80,0.05); }
+.signal-card.hold-card { border-color: rgba(255,167,38,0.2); }
+
+.signal-badge {
+  display: inline-block;
+  padding: 4px 18px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.badge-buy { background: rgba(38,201,108,0.2); color: var(--buy); border: 1px solid rgba(38,201,108,0.4); }
+.badge-sell { background: rgba(239,83,80,0.2); color: var(--sell); border: 1px solid rgba(239,83,80,0.4); }
+.badge-hold { background: rgba(255,167,38,0.15); color: var(--hold); border: 1px solid rgba(255,167,38,0.3); }
+
+.rsi-value { font-size: 3.5rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.rsi-zone-label { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.zone-oversold { color: var(--oversold); }
+.zone-recovering { color: var(--recovering); }
+.zone-neutral { color: var(--neutral); }
+.zone-overbought { color: var(--overbought); }
+
+.rsi-value.zone-oversold { color: var(--oversold); }
+.rsi-value.zone-recovering { color: var(--recovering); }
+.rsi-value.zone-neutral { color: var(--neutral); }
+.rsi-value.zone-overbought { color: var(--overbought); }
+
+/* RSI GAUGE */
+.gauge-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.gauge-title { font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+.gauge-bar-wrap {
+  position: relative;
+  height: 28px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(to right,
+    #ef5350 0%, #ef5350 30%,
+    #ffa726 30%, #ffa726 50%,
+    #26c96c 50%, #26c96c 70%,
+    #ff7043 70%, #ff7043 100%
+  );
+  margin-bottom: 10px;
+}
+.gauge-needle {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 3px;
+  background: white;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(255,255,255,0.8);
+  transform: translateX(-50%);
+  transition: left 0.5s ease;
+}
+.gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+.gauge-zones {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  margin-top: 4px;
+}
+.gz-oversold { color: var(--oversold); }
+.gz-recovering { color: var(--recovering); }
+.gz-neutral { color: var(--neutral); }
+.gz-overbought { color: var(--overbought); }
+
+/* STATS ROW */
+.stats-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.stat-item { text-align: center; }
+.stat-item .val { font-size: 1.4rem; font-weight: 700; }
+.stat-item .lbl { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+.val.positive { color: var(--buy); }
+.val.negative { color: var(--sell); }
+.val.neutral-val { color: var(--hold); }
+
+/* CHARTS */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.chart-title { font-size: 0.82rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.06em; }
+.chart-subtitle { font-size: 0.72rem; color: var(--text-dim); }
+.chart-canvas-wrap { position: relative; height: 220px; }
+
+/* SIGNAL HISTORY TABLE */
+.history-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.history-title { font-size: 0.82rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+th { text-align: left; padding: 8px 10px; color: var(--text-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 8px 10px; border-bottom: 1px solid rgba(45,63,94,0.5); color: var(--text); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+.outcome-pos { color: var(--buy); font-weight: 600; }
+.outcome-neg { color: var(--sell); font-weight: 600; }
+.outcome-open { color: var(--hold); font-weight: 600; font-style: italic; }
+.no-signals { color: var(--text-dim); font-style: italic; text-align: center; padding: 16px; }
+
+/* ERROR */
+.error-card {
+  background: rgba(239,83,80,0.1);
+  border: 1px solid rgba(239,83,80,0.3);
+  border-radius: var(--radius);
+  padding: 16px;
+  color: var(--sell);
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="index.html">Standard</a>
+  <a href="index2.html">Enhanced</a>
+  <a href="index3.html">RS Ranking</a>
+  <a href="index4.html" class="active">RSI</a>
+</nav>
+
+<div class="container">
+  <!-- Summary section -->
+  <div class="summary-section" id="summary-section">
+    <div class="summary-title">📊 RSI Mean Reversion Overview</div>
+    <div id="summary-content">
+      <div class="loading-bar"><div class="spinner"></div>Loading RSI data for all tickers…</div>
+    </div>
+  </div>
+
+  <!-- Ticker tabs -->
+  <div class="tickers-nav" id="tickers-nav"></div>
+
+  <!-- Ticker panels -->
+  <div id="panels"></div>
+</div>
+
+<script>
+const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL','SOUN','ACHR','ROKU','IONQ'];
+const ALL_TICKERS = [...TICKERS, 'SPY'];
+const RSI_PERIOD = 14;
+const SMA_PERIOD = 20;
+const CHART_DAYS = 60;
+
+// ─── RSI Calculation (Wilder's smoothing) ───────────────────────────────────
+function calcRSI(closes) {
+  if (closes.length < RSI_PERIOD + 1) return [];
+  const rsi = new Array(closes.length).fill(null);
+  let avgGain = 0, avgLoss = 0;
+
+  // First RSI: simple average
+  for (let i = 1; i <= RSI_PERIOD; i++) {
+    const d = closes[i] - closes[i-1];
+    if (d >= 0) avgGain += d; else avgLoss -= d;
+  }
+  avgGain /= RSI_PERIOD;
+  avgLoss /= RSI_PERIOD;
+  const rs0 = avgLoss === 0 ? 100 : avgGain / avgLoss;
+  rsi[RSI_PERIOD] = 100 - 100 / (1 + rs0);
+
+  // Wilder's smoothing
+  for (let i = RSI_PERIOD + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    const gain = d >= 0 ? d : 0;
+    const loss = d < 0 ? -d : 0;
+    avgGain = (avgGain * (RSI_PERIOD - 1) + gain) / RSI_PERIOD;
+    avgLoss = (avgLoss * (RSI_PERIOD - 1) + loss) / RSI_PERIOD;
+    const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+    rsi[i] = 100 - 100 / (1 + rs);
+  }
+  return rsi;
+}
+
+// ─── SMA Calculation ─────────────────────────────────────────────────────────
+function calcSMA(closes, period) {
+  return closes.map((_, i) => {
+    if (i < period - 1) return null;
+    const slice = closes.slice(i - period + 1, i + 1);
+    return slice.reduce((a, b) => a + b, 0) / period;
+  });
+}
+
+// ─── Signal Detection ────────────────────────────────────────────────────────
+function detectSignals(rsi, sma, closes) {
+  const signals = [];
+  for (let i = 1; i < rsi.length; i++) {
+    if (rsi[i] === null || rsi[i-1] === null || sma[i] === null) continue;
+
+    // BUY: RSI crosses UP through 30 (prev < 30, now >= 30) AND price > SMA
+    if (rsi[i-1] < 30 && rsi[i] >= 30 && closes[i] > sma[i]) {
+      signals.push({ idx: i, type: 'BUY', rsi: rsi[i], price: closes[i] });
+    }
+    // SELL: RSI crosses DOWN through 70 (prev >= 70, now < 70) AND price < SMA
+    else if (rsi[i-1] >= 70 && rsi[i] < 70 && closes[i] < sma[i]) {
+      signals.push({ idx: i, type: 'SELL', rsi: rsi[i], price: closes[i] });
+    }
+  }
+  return signals;
+}
+
+// ─── Current Signal ──────────────────────────────────────────────────────────
+function getCurrentSignal(rsi, sma, closes, signals) {
+  const lastRSI = rsi[rsi.length - 1];
+  const lastSMA = sma[sma.length - 1];
+  const lastClose = closes[closes.length - 1];
+  const lastSignal = signals.length > 0 ? signals[signals.length - 1] : null;
+
+  if (lastRSI < 30 && lastClose > lastSMA) return 'BUY';
+  if (lastRSI > 70 && lastClose < lastSMA) return 'SELL';
+  // Also show BUY if last signal was BUY and RSI < 50 (still in recovery)
+  if (lastSignal && lastSignal.type === 'BUY' && lastRSI < 50) return 'BUY';
+  return 'HOLD';
+}
+
+// ─── RSI Zone ────────────────────────────────────────────────────────────────
+function getRSIZone(rsiVal) {
+  if (rsiVal < 30) return { label: 'Oversold', cls: 'zone-oversold' };
+  if (rsiVal < 50) return { label: 'Recovering', cls: 'zone-recovering' };
+  if (rsiVal <= 70) return { label: 'Neutral / Bullish', cls: 'zone-neutral' };
+  return { label: 'Overbought', cls: 'zone-overbought' };
+}
+
+// ─── Fetch Yahoo Finance ──────────────────────────────────────────────────────
+async function fetchOHLCV(ticker) {
+  const url = `https://corsproxy.io/?url=https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=6mo`;
+  const r = await fetch(url);
+  const j = await r.json();
+  const result = j.chart.result[0];
+  const timestamps = result.timestamp;
+  const closes = result.indicators.quote[0].close;
+  const highs = result.indicators.quote[0].high;
+  const lows = result.indicators.quote[0].low;
+  const opens = result.indicators.quote[0].open;
+  const volumes = result.indicators.quote[0].volume;
+
+  // Filter out null closes
+  const data = timestamps.map((ts, i) => ({
+    date: new Date(ts * 1000),
+    close: closes[i],
+    high: highs[i],
+    low: lows[i],
+    open: opens[i],
+    volume: volumes[i]
+  })).filter(d => d.close !== null && d.close !== undefined);
+
+  return data;
+}
+
+// ─── Build signal history with outcomes ──────────────────────────────────────
+function buildSignalHistory(signals, dates, closes) {
+  return signals.map((sig, i) => {
+    const entryDate = dates[sig.idx];
+    const entryPrice = sig.price;
+    let outcome = null;
+    let outcomePct = null;
+
+    if (sig.type === 'BUY') {
+      // Find next SELL signal
+      const nextSell = signals.find(s => s.type === 'SELL' && s.idx > sig.idx);
+      if (nextSell) {
+        outcomePct = ((nextSell.price - entryPrice) / entryPrice) * 100;
+        outcome = 'closed';
+      } else {
+        // Open — use current price
+        const currentPrice = closes[closes.length - 1];
+        outcomePct = ((currentPrice - entryPrice) / entryPrice) * 100;
+        outcome = 'open';
+      }
+    } else {
+      // SELL — find next BUY to measure avoidance
+      const nextBuy = signals.find(s => s.type === 'BUY' && s.idx > sig.idx);
+      if (nextBuy) {
+        outcomePct = ((entryPrice - nextBuy.price) / entryPrice) * 100; // positive = avoided loss
+        outcome = 'closed';
+      } else {
+        const currentPrice = closes[closes.length - 1];
+        outcomePct = ((entryPrice - currentPrice) / entryPrice) * 100;
+        outcome = 'open';
+      }
+    }
+
+    return {
+      date: entryDate,
+      type: sig.type,
+      rsiAtSignal: sig.rsi,
+      price: entryPrice,
+      outcomePct,
+      outcome
+    };
+  }).reverse(); // Most recent first
+}
+
+// ─── Days since last signal ───────────────────────────────────────────────────
+function daysSinceSignal(signal, dates) {
+  if (!signal) return null;
+  const signalDate = dates[signal.idx];
+  const today = new Date();
+  const diff = Math.floor((today - signalDate) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
+// ─── Max drawdown from last BUY ──────────────────────────────────────────────
+function maxDrawdownFromBuy(signals, closes) {
+  const lastBuy = [...signals].reverse().find(s => s.type === 'BUY');
+  if (!lastBuy) return null;
+  const subset = closes.slice(lastBuy.idx);
+  const peak = Math.max(...subset);
+  const trough = Math.min(...subset);
+  return ((trough - peak) / peak) * 100;
+}
+
+// ─── Current gain from last BUY ──────────────────────────────────────────────
+function gainFromLastBuy(signals, closes) {
+  const lastBuy = [...signals].reverse().find(s => s.type === 'BUY');
+  if (!lastBuy) return null;
+  const currentPrice = closes[closes.length - 1];
+  return ((currentPrice - lastBuy.price) / lastBuy.price) * 100;
+}
+
+// ─── Render RSI Chart ─────────────────────────────────────────────────────────
+function renderRSIChart(canvasId, dates, rsi, signals) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const n = Math.min(CHART_DAYS, dates.length);
+  const slicedDates = dates.slice(-n);
+  const slicedRSI = rsi.slice(-n);
+  const startIdx = dates.length - n;
+
+  const labels = slicedDates.map(d => {
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    return `${m}/${day}`;
+  });
+
+  // Map signals to chart positions
+  const buyPoints = slicedRSI.map((v, i) => {
+    const globalIdx = startIdx + i;
+    const sig = signals.find(s => s.idx === globalIdx && s.type === 'BUY');
+    return sig ? v : null;
+  });
+  const sellPoints = slicedRSI.map((v, i) => {
+    const globalIdx = startIdx + i;
+    const sig = signals.find(s => s.idx === globalIdx && s.type === 'SELL');
+    return sig ? v : null;
+  });
+
+  // Shading + dashed lines plugin
+  const shadingPlugin = {
+    id: 'rsiShading',
+    beforeDraw(chart) {
+      const { ctx, chartArea: { left, right }, scales } = chart;
+      if (!scales.y) return;
+      const y30 = scales.y.getPixelForValue(30);
+      const y70 = scales.y.getPixelForValue(70);
+      const y0 = scales.y.getPixelForValue(0);
+      const y100 = scales.y.getPixelForValue(100);
+
+      ctx.save();
+      // Red zone < 30
+      ctx.fillStyle = 'rgba(239,83,80,0.12)';
+      ctx.fillRect(left, y30, right - left, y0 - y30);
+      // Orange zone > 70
+      ctx.fillStyle = 'rgba(255,112,67,0.12)';
+      ctx.fillRect(left, y100, right - left, y70 - y100);
+
+      // Dashed line at 30
+      ctx.strokeStyle = 'rgba(239,83,80,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(left, y30);
+      ctx.lineTo(right, y30);
+      ctx.stroke();
+
+      // Dashed line at 70
+      ctx.strokeStyle = 'rgba(255,112,67,0.7)';
+      ctx.beginPath();
+      ctx.moveTo(left, y70);
+      ctx.lineTo(right, y70);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+  };
+
+  new Chart(canvas, {
+    type: 'line',
+    plugins: [shadingPlugin],
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'RSI',
+          data: slicedRSI,
+          borderColor: '#a78bfa',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false,
+          tension: 0.3,
+          order: 3
+        },
+        {
+          label: 'BUY',
+          data: buyPoints,
+          borderColor: 'transparent',
+          backgroundColor: '#26c96c',
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          pointStyle: 'triangle',
+          fill: false,
+          showLine: false,
+          order: 1
+        },
+        {
+          label: 'SELL',
+          data: sellPoints,
+          borderColor: 'transparent',
+          backgroundColor: '#ef5350',
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          pointStyle: 'rectRot',
+          fill: false,
+          showLine: false,
+          order: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e293b',
+          borderColor: '#2d3f5e',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#e2e8f0',
+          callbacks: {
+            label: ctx => {
+              if (ctx.datasetIndex === 0) return ` RSI: ${ctx.raw !== null ? ctx.raw.toFixed(1) : '—'}`;
+              return null;
+            }
+          }
+        },
+        annotation: {
+          annotations: {
+            line30: { type: 'line', yMin: 30, yMax: 30, borderColor: 'rgba(239,83,80,0.7)', borderWidth: 1.5, borderDash: [5,4] },
+            line70: { type: 'line', yMin: 70, yMax: 70, borderColor: 'rgba(255,112,67,0.7)', borderWidth: 1.5, borderDash: [5,4] }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#94a3b8', maxTicksLimit: 8, font: { size: 10 } },
+          grid: { color: 'rgba(45,63,94,0.4)' }
+        },
+        y: {
+          min: 0, max: 100,
+          ticks: { color: '#94a3b8', font: { size: 10 } },
+          grid: { color: 'rgba(45,63,94,0.4)' }
+        }
+      }
+    }
+  });
+
+  // Draw dashed lines manually since annotation plugin may not be loaded
+  // We'll use the canvas after render
+  canvas.addEventListener('_rsiDrawn', () => {});
+}
+
+// ─── Render Price Chart ──────────────────────────────────────────────────────
+function renderPriceChart(canvasId, dates, closes, sma, signals) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const n = Math.min(CHART_DAYS, dates.length);
+  const slicedDates = dates.slice(-n);
+  const slicedCloses = closes.slice(-n);
+  const slicedSMA = sma.slice(-n);
+  const startIdx = dates.length - n;
+
+  const labels = slicedDates.map(d => {
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    return `${m}/${day}`;
+  });
+
+  const buyPoints = slicedCloses.map((v, i) => {
+    const globalIdx = startIdx + i;
+    const sig = signals.find(s => s.idx === globalIdx && s.type === 'BUY');
+    return sig ? v : null;
+  });
+  const sellPoints = slicedCloses.map((v, i) => {
+    const globalIdx = startIdx + i;
+    const sig = signals.find(s => s.idx === globalIdx && s.type === 'SELL');
+    return sig ? v : null;
+  });
+
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Price',
+          data: slicedCloses,
+          borderColor: '#60a5fa',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false,
+          tension: 0.3,
+          order: 3
+        },
+        {
+          label: '20d SMA',
+          data: slicedSMA,
+          borderColor: '#fbbf24',
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          pointRadius: 0,
+          fill: false,
+          tension: 0.3,
+          order: 4
+        },
+        {
+          label: 'BUY',
+          data: buyPoints,
+          borderColor: 'transparent',
+          backgroundColor: '#26c96c',
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          pointStyle: 'triangle',
+          fill: false,
+          showLine: false,
+          order: 1
+        },
+        {
+          label: 'SELL',
+          data: sellPoints,
+          borderColor: 'transparent',
+          backgroundColor: '#ef5350',
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          pointStyle: 'rectRot',
+          fill: false,
+          showLine: false,
+          order: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12, padding: 8 }
+        },
+        tooltip: {
+          backgroundColor: '#1e293b',
+          borderColor: '#2d3f5e',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#e2e8f0',
+          callbacks: {
+            label: ctx => {
+              if (ctx.datasetIndex === 0) return ` Price: $${ctx.raw !== null ? ctx.raw.toFixed(2) : '—'}`;
+              if (ctx.datasetIndex === 1) return ` SMA20: $${ctx.raw !== null ? ctx.raw.toFixed(2) : '—'}`;
+              return null;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#94a3b8', maxTicksLimit: 8, font: { size: 10 } },
+          grid: { color: 'rgba(45,63,94,0.4)' }
+        },
+        y: {
+          ticks: {
+            color: '#94a3b8', font: { size: 10 },
+            callback: v => '$' + v.toFixed(0)
+          },
+          grid: { color: 'rgba(45,63,94,0.4)' }
+        }
+      }
+    }
+  });
+}
+
+// ─── Build ticker panel HTML ──────────────────────────────────────────────────
+function buildPanel(ticker, data) {
+  const closes = data.map(d => d.close);
+  const dates = data.map(d => d.date);
+
+  const rsi = calcRSI(closes);
+  const sma = calcSMA(closes, SMA_PERIOD);
+  const signals = detectSignals(rsi, sma, closes);
+  const currentSignal = getCurrentSignal(rsi, sma, closes, signals);
+  const lastRSI = rsi[rsi.length - 1];
+  const zone = getRSIZone(lastRSI);
+
+  const lastBuySignal = [...signals].reverse().find(s => s.type === 'BUY');
+  const daysSince = daysSinceSignal(lastBuySignal, dates);
+  const drawdown = maxDrawdownFromBuy(signals, closes);
+  const gain = gainFromLastBuy(signals, closes);
+
+  const signalCls = currentSignal.toLowerCase();
+  const badgeCls = `badge-${signalCls}`;
+  const cardCls = `${signalCls}-card`;
+
+  const rsiStr = lastRSI !== null ? lastRSI.toFixed(1) : '—';
+
+  // Signal history
+  const history = buildSignalHistory(signals, dates, closes);
+
+  const historyRows = history.length === 0
+    ? `<tr><td colspan="6" class="no-signals">No crossover signals in last 6 months</td></tr>`
+    : history.slice(0, 10).map(h => {
+        const dateStr = h.date ? `${h.date.getMonth()+1}/${h.date.getDate()}/${h.date.getFullYear().toString().slice(-2)}` : '—';
+        const sigBadge = h.type === 'BUY'
+          ? `<span class="signal-badge badge-buy">BUY</span>`
+          : `<span class="signal-badge badge-sell">SELL</span>`;
+        const pct = h.outcomePct !== null ? h.outcomePct.toFixed(2) : '—';
+        const outcomeCls = h.outcomePct > 0 ? 'outcome-pos' : h.outcomePct < 0 ? 'outcome-neg' : '';
+        const outcomeLabel = h.outcome === 'open'
+          ? `<span class="outcome-open">${pct}% (open)</span>`
+          : `<span class="${outcomeCls}">${pct}%</span>`;
+
+        return `<tr>
+          <td>${dateStr}</td>
+          <td>${sigBadge}</td>
+          <td>${h.rsiAtSignal.toFixed(1)}</td>
+          <td>$${h.price.toFixed(2)}</td>
+          <td>${outcomeLabel}</td>
+        </tr>`;
+      }).join('');
+
+  return { rsi, sma, closes, dates, signals, currentSignal, lastRSI, zone, daysSince, drawdown, gain, signalCls, badgeCls, cardCls, rsiStr, historyRows };
+}
+
+// ─── Render panel DOM ─────────────────────────────────────────────────────────
+function renderPanelHTML(ticker, p) {
+  const daysSinceStr = p.daysSince !== null ? `${p.daysSince}d` : 'N/A';
+  const drawdownStr = p.drawdown !== null ? `${p.drawdown.toFixed(1)}%` : 'N/A';
+  const gainStr = p.gain !== null ? `${p.gain >= 0 ? '+' : ''}${p.gain.toFixed(2)}%` : 'N/A';
+  const gainCls = p.gain !== null ? (p.gain >= 0 ? 'positive' : 'negative') : 'neutral-val';
+  const drawdownCls = p.drawdown !== null ? (p.drawdown >= 0 ? 'positive' : 'negative') : 'neutral-val';
+  const needlePct = p.lastRSI !== null ? p.lastRSI : 50;
+
+  return `
+    <div class="signal-row">
+      <div class="signal-card ${p.cardCls}">
+        <div class="signal-badge ${p.badgeCls}">${p.currentSignal}</div>
+        <div class="rsi-value ${p.zone.cls}">${p.rsiStr}</div>
+        <div class="rsi-zone-label ${p.zone.cls}">${p.zone.label}</div>
+        <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">Current RSI (14)</div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-title">RSI Gauge — 0 to 100</div>
+        <div class="gauge-bar-wrap">
+          <div class="gauge-needle" style="left:${needlePct}%"></div>
+        </div>
+        <div class="gauge-labels"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+        <div class="gauge-zones">
+          <span class="gz-oversold">◀ Oversold</span>
+          <span class="gz-recovering">Recovering</span>
+          <span class="gz-neutral">Bullish</span>
+          <span class="gz-overbought">Overbought ▶</span>
+        </div>
+      </div>
+      <div class="stats-card">
+        <div class="gauge-title">Stats from Last BUY Signal</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="val neutral-val">${daysSinceStr}</div>
+            <div class="lbl">Days Since BUY</div>
+          </div>
+          <div class="stat-item">
+            <div class="val ${drawdownCls}">${drawdownStr}</div>
+            <div class="lbl">Max Drawdown</div>
+          </div>
+          <div class="stat-item">
+            <div class="val ${gainCls}">${gainStr}</div>
+            <div class="lbl">Current P&L</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">RSI (14) — Last 60 Days</div>
+          <div class="chart-subtitle" style="color:var(--rsi-purple)">▲ BUY  ◆ SELL</div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="rsi-chart-${ticker}"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Price + 20d SMA — Last 60 Days</div>
+          <div class="chart-subtitle">Signal markers shown</div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="price-chart-${ticker}"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="history-card">
+      <div class="history-title">Signal History (Last 6 Months)</div>
+      <table>
+        <thead><tr><th>Date</th><th>Signal</th><th>RSI</th><th>Price</th><th>Outcome</th></tr></thead>
+        <tbody>${p.historyRows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ─── Render summary section ───────────────────────────────────────────────────
+function renderSummary(allResults) {
+  let oversoldCount = 0, overboughtCount = 0, activeBuys = [];
+
+  for (const [ticker, p] of Object.entries(allResults)) {
+    if (ticker === 'SPY') continue;
+    if (p.lastRSI !== null && p.lastRSI < 30) oversoldCount++;
+    if (p.lastRSI !== null && p.lastRSI > 70) overboughtCount++;
+    if (p.currentSignal === 'BUY') activeBuys.push(ticker);
+  }
+
+  const buyChips = activeBuys.length > 0
+    ? activeBuys.map(t => `<span class="buy-chip">${t}</span>`).join('')
+    : `<span class="no-buys">No active BUY signals right now</span>`;
+
+  document.getElementById('summary-content').innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-stat">
+        <div class="stat-num stat-oversold">${oversoldCount}</div>
+        <div class="stat-label">Oversold (RSI &lt; 30)</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-num stat-overbought">${overboughtCount}</div>
+        <div class="stat-label">Overbought (RSI &gt; 70)</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-num stat-buy">${activeBuys.length}</div>
+        <div class="stat-label">Active BUY Signals</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-num stat-hold">${TICKERS.length - oversoldCount - overboughtCount}</div>
+        <div class="stat-label">In Neutral Zone</div>
+      </div>
+    </div>
+    <div class="active-buys">
+      <div class="active-buys-label">Tickers with Active BUY Signal</div>
+      <div class="active-buy-chips">${buyChips}</div>
+    </div>
+  `;
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+(async () => {
+  const nav = document.getElementById('tickers-nav');
+  const panelsDiv = document.getElementById('panels');
+  const allResults = {};
+
+  // Fetch all tickers in parallel
+  const fetches = TICKERS.map(async ticker => {
+    try {
+      const data = await fetchOHLCV(ticker);
+      const p = buildPanel(ticker, data);
+      allResults[ticker] = p;
+      return { ticker, p, error: null };
+    } catch(e) {
+      return { ticker, p: null, error: e.message };
+    }
+  });
+
+  const results = await Promise.all(fetches);
+
+  // Render summary
+  renderSummary(allResults);
+
+  // Build nav tabs + panels
+  results.forEach(({ ticker, p, error }, idx) => {
+    // Tab
+    const tab = document.createElement('button');
+    tab.className = 'ticker-tab' + (idx === 0 ? ' active' : '');
+    tab.dataset.ticker = ticker;
+    if (p) {
+      const dotCls = p.currentSignal.toLowerCase();
+      tab.innerHTML = `${ticker} <span class="tab-signal ${dotCls}"></span>`;
+    } else {
+      tab.innerHTML = `${ticker} <span class="tab-signal hold"></span>`;
+    }
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.ticker-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.ticker-panel').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`panel-${ticker}`).classList.add('active');
+    });
+    nav.appendChild(tab);
+
+    // Panel
+    const panel = document.createElement('div');
+    panel.className = 'ticker-panel' + (idx === 0 ? ' active' : '');
+    panel.id = `panel-${ticker}`;
+
+    if (error) {
+      panel.innerHTML = `<div class="error-card">Failed to load data for ${ticker}: ${error}</div>`;
+    } else {
+      panel.innerHTML = renderPanelHTML(ticker, p);
+    }
+    panelsDiv.appendChild(panel);
+
+    // Only render charts for first ticker immediately
+    if (p && !error && idx === 0) {
+      requestAnimationFrame(() => {
+        renderRSIChart(`rsi-chart-${ticker}`, p.dates, p.rsi, p.signals);
+        renderPriceChart(`price-chart-${ticker}`, p.dates, p.closes, p.sma, p.signals);
+        const rc = document.getElementById(`rsi-chart-${ticker}`);
+        if (rc) rc._rendered = true;
+      });
+    }
+  });
+
+  // Render charts for other tickers on tab click (lazy)
+  document.querySelectorAll('.ticker-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const ticker = tab.dataset.ticker;
+      const p = allResults[ticker];
+      if (!p) return;
+      const rsiCanvas = document.getElementById(`rsi-chart-${ticker}`);
+      if (rsiCanvas && rsiCanvas._rendered) return;
+      if (rsiCanvas) rsiCanvas._rendered = true;
+      setTimeout(() => {
+        renderRSIChart(`rsi-chart-${ticker}`, p.dates, p.rsi, p.signals);
+        renderPriceChart(`price-chart-${ticker}`, p.dates, p.closes, p.sma, p.signals);
+      }, 50);
+    });
+  });
+})();
+</script>
+</body>
+</html>

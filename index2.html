@@ -149,16 +149,17 @@ tr:last-child td { border-bottom: none; }
 <div class="top-nav">
   <span class="nav-label">Dashboard:</span>
   <a href="index.html">Standard</a>
-  <a href="index2.html" class="active">Enhanced ↗</a>
+  <a href="index2.html" class="active">Enhanced â</a>
+  <a href="index3.html">RS Ranking</a>
 </div>
 
 <!-- Header -->
 <div class="header">
   <div class="header-row">
-    <h1>📦 Enhanced Darvas Box Dashboard</h1>
+    <h1>ð¦ Enhanced Darvas Box Dashboard</h1>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span class="header-meta" id="updated-time">Loading…</span>
-      <button class="refresh-btn" id="refresh-btn" onclick="refreshAll()">🔄 Refresh</button>
+      <span class="header-meta" id="updated-time">Loadingâ¦</span>
+      <button class="refresh-btn" id="refresh-btn" onclick="refreshAll()">ð Refresh</button>
     </div>
   </div>
 </div>
@@ -170,7 +171,7 @@ tr:last-child td { border-bottom: none; }
 
 <!-- Panels -->
 <div class="panels-container" id="panels-container">
-  <div class="loading">Fetching live market data…</div>
+  <div class="loading">Fetching live market dataâ¦</div>
 </div>
 
 <script>
@@ -193,9 +194,9 @@ let charts = {};
 let chartRanges = {};
 let activeTab = TICKERS[0];
 
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 //  DATA FETCHING
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 async function fetchYahooData(ticker, forceRefresh = false) {
   const key = 'yf_' + ticker;
   if (!forceRefresh) {
@@ -248,9 +249,9 @@ async function fetchYahooData(ticker, forceRefresh = false) {
   return out;
 }
 
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 //  INDICATORS
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 function sma(arr, period) {
   return arr.map((_, i) => {
     if (i < period - 1) return null;
@@ -267,9 +268,9 @@ function rollingAvg(arr, period) {
   });
 }
 
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 //  ENHANCED DARVAS BOX ALGORITHM
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 function computeEnhancedDarvas(data) {
   const { dates, highs, lows, closes, volumes } = data;
   const n = closes.length;
@@ -307,21 +308,21 @@ function computeEnhancedDarvas(data) {
 
     if (cooldownLeft > 0) cooldownLeft--;
 
-    // ── Build / confirm the box ceiling ──
+    // ââ Build / confirm the box ceiling ââ
     if (candidateCeiling === null) {
       candidateCeiling = h;
       candidateDays = 1;
     } else {
-      // new high exceeds candidate → reset
+      // new high exceeds candidate â reset
       if (h > candidateCeiling * 1.01) {
         candidateCeiling = h;
         candidateDays = 1;
       } else if (Math.abs(h - candidateCeiling) / candidateCeiling <= 0.01) {
-        // Within 1% → confirm
+        // Within 1% â confirm
         candidateDays++;
         candidateCeiling = Math.max(candidateCeiling, h); // take the max within the band
       } else {
-        candidateDays++;  // h is below ceiling → counts toward confirmation
+        candidateDays++;  // h is below ceiling â counts toward confirmation
       }
     }
 
@@ -345,7 +346,7 @@ function computeEnhancedDarvas(data) {
       if (l < boxFloor) boxFloor = l;
     }
 
-    // ── Signal detection ──
+    // ââ Signal detection ââ
     if (inBox && boxCeiling !== null) {
       if (c > boxCeiling) {
         // Potential BUY
@@ -365,7 +366,7 @@ function computeEnhancedDarvas(data) {
           signals.push({ date: dates[i], signal: 'BUY', close: c, box_top: boxCeiling, box_bottom: boxFloor, confidence: conf, reason, vol_ratio: volRatio });
           dailyBoxTop[i] = boxCeiling;
           dailyBoxBot[i] = boxFloor;
-          // Reset box after BUY — look for new formation
+          // Reset box after BUY â look for new formation
           boxCeiling = null; boxFloor = null; inBox = false;
           candidateCeiling = h; candidateDays = 1;
         } else {
@@ -434,21 +435,21 @@ function computeEnhancedDarvas(data) {
   };
 }
 
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 //  HELPERS
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 function fmt(n) { return n != null ? '$' + Number(n).toFixed(2) : 'N/A'; }
 function fmtVol(n) { return n != null ? (n / 1e6).toFixed(1) + 'M' : 'N/A'; }
-function stars(n) { return '⭐'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n)); }
+function stars(n) { return 'â­'.repeat(n) + 'â'.repeat(Math.max(0, 5 - n)); }
 function sliceByRange(arr, rangeLabel) {
   const r = RANGES.find(x => x.label === rangeLabel) || RANGES[RANGES.length - 1];
   const n = Math.min(r.days, arr.length);
   return arr.length - n;
 }
 
-// ──────────────────────────────────────────────
-//  UI — TAB SWITCHING
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
+//  UI â TAB SWITCHING
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 function switchTab(ticker) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -471,9 +472,9 @@ function setRange(ticker, rangeLabel) {
   if (d) { renderPriceChart(ticker, d, rangeLabel); renderVolChart(ticker, d, rangeLabel); }
 }
 
-// ──────────────────────────────────────────────
-//  UI — BUILD TABS SKELETON
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
+//  UI â BUILD TABS SKELETON
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 function buildTabsSkeleton() {
   const bar = document.getElementById('tab-bar');
   bar.innerHTML = '';
@@ -484,19 +485,19 @@ function buildTabsSkeleton() {
     btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
     btn.id = 'tab-' + t;
     btn.onclick = () => switchTab(t);
-    btn.innerHTML = `<span class="tab-ticker">${t}</span><span class="tab-signal tab-signal-HOLD">···</span>`;
+    btn.innerHTML = `<span class="tab-ticker">${t}</span><span class="tab-signal tab-signal-HOLD">Â·Â·Â·</span>`;
     bar.appendChild(btn);
     const panel = document.createElement('div');
     panel.id = 'panel-' + t;
     panel.className = 'panel' + (i === 0 ? ' active' : '');
-    panel.innerHTML = `<div class="loading">⏳ Fetching ${t} data…<br><div class="skeleton" style="width:60%;margin:16px auto"></div><div class="skeleton" style="width:80%;margin:8px auto"></div></div>`;
+    panel.innerHTML = `<div class="loading">â³ Fetching ${t} dataâ¦<br><div class="skeleton" style="width:60%;margin:16px auto"></div><div class="skeleton" style="width:80%;margin:8px auto"></div></div>`;
     cont.appendChild(panel);
   });
 }
 
-// ──────────────────────────────────────────────
-//  UI — RENDER TICKER CARD
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
+//  UI â RENDER TICKER CARD
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 function renderCard(ticker, result) {
   const panel = document.getElementById('panel-' + ticker);
   if (!panel) return;
@@ -528,7 +529,7 @@ function renderCard(ticker, result) {
 
   let html = '';
 
-  // ── Signal card ──
+  // ââ Signal card ââ
   html += '<div class="signal-card">';
   html += '<div class="signal-top">';
   if (latest) {
@@ -536,57 +537,57 @@ function renderCard(ticker, result) {
     html += `<div class="signal-badge badge-${latest.signal}">${latest.signal}</div>`;
     html += '<div class="signal-right">';
     html += `<div class="signal-reason">${latest.reason}</div>`;
-    html += `<div class="signal-date">📅 ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
+    html += `<div class="signal-date">ð ${latest.date} &nbsp;|&nbsp; Close: ${fmt(latest.close)}</div>`;
     html += `<div class="confidence-row">
       <span class="confidence-stars" title="Confidence: ${conf}/5">${stars(conf)}</span>
       <span class="confidence-label">Signal Confidence ${conf}/5</span>
     </div>`;
     html += '</div>';
   } else {
-    html += '<div style="color:var(--text-dim);font-size:14px">⚠️ No signals generated yet (insufficient data or no breakout).</div>';
+    html += '<div style="color:var(--text-dim);font-size:14px">â ï¸ No signals generated yet (insufficient data or no breakout).</div>';
   }
   html += '</div>';
 
   // Status pills
   html += '<div class="status-row">';
   html += trendOk
-    ? `<span class="status-pill pill-ok">✅ Above 50d SMA</span>`
-    : `<span class="status-pill pill-warn">⚠️ Below 50d SMA</span>`;
+    ? `<span class="status-pill pill-ok">â Above 50d SMA</span>`
+    : `<span class="status-pill pill-warn">â ï¸ Below 50d SMA</span>`;
   html += volOk
-    ? `<span class="status-pill pill-ok">✅ Volume confirmed (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`
-    : `<span class="status-pill pill-warn">⚠️ Low volume (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`;
+    ? `<span class="status-pill pill-ok">â Volume confirmed (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`
+    : `<span class="status-pill pill-warn">â ï¸ Low volume (${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'})</span>`;
   if (cooldownLeft > 0) {
-    html += `<span class="status-pill pill-bad">🔒 Re-entry cooldown: ${cooldownLeft} days remaining</span>`;
+    html += `<span class="status-pill pill-bad">ð Re-entry cooldown: ${cooldownLeft} days remaining</span>`;
   }
   html += '</div>';
   html += '</div>'; // signal-card
 
-  // ── Algorithm explain ──
+  // ââ Algorithm explain ââ
   html += `<div class="algo-explain">
     <strong>Enhanced Algorithm:</strong> Box ceiling locked after <strong>3 consecutive days</strong> where high varies &lt;1%.
-    BUY requires: price &gt; 50d SMA + volume &gt;1.2× 20d avg. 10-day re-entry cooldown after SELL.
-    Confidence score (1–5) based on box tightness, volume ratio and trend alignment.
+    BUY requires: price &gt; 50d SMA + volume &gt;1.2Ã 20d avg. 10-day re-entry cooldown after SELL.
+    Confidence score (1â5) based on box tightness, volume ratio and trend alignment.
   </div>`;
 
-  // ── Box stats ──
+  // ââ Box stats ââ
   html += '<div class="box-stats">';
-  html += `<div class="stat-card"><div class="stat-label">📈 Box Ceiling</div><div class="stat-value up">${fmt(currentBoxTop)}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">📉 Box Floor</div><div class="stat-value down">${fmt(currentBoxBot)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð Box Ceiling</div><div class="stat-value up">${fmt(currentBoxTop)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð Box Floor</div><div class="stat-value down">${fmt(currentBoxBot)}</div></div>`;
   const tightness = (currentBoxTop && currentBoxBot) ? ((currentBoxTop - currentBoxBot) / currentBoxBot * 100).toFixed(1) + '%' : 'N/A';
-  html += `<div class="stat-card"><div class="stat-label">📐 Box Tightness</div><div class="stat-value default">${tightness}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">📊 Vol Ratio (20d)</div><div class="stat-value ${volOk ? 'up' : 'neutral'}">${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">📉 50d SMA</div><div class="stat-value ${trendOk ? 'up' : 'down'}">${fmt(latestSma)}</div></div>`;
-  html += `<div class="stat-card"><div class="stat-label">💹 Latest Close</div><div class="stat-value default">${fmt(latestClose)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð Box Tightness</div><div class="stat-value default">${tightness}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð Vol Ratio (20d)</div><div class="stat-value ${volOk ? 'up' : 'neutral'}">${volRatio ? volRatio.toFixed(2) + 'x' : 'N/A'}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð 50d SMA</div><div class="stat-value ${trendOk ? 'up' : 'down'}">${fmt(latestSma)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">ð¹ Latest Close</div><div class="stat-value default">${fmt(latestClose)}</div></div>`;
   html += '</div>';
 
-  // ── Signal counts ──
+  // ââ Signal counts ââ
   html += '<div class="counts-row">';
   html += `<div class="count-card count-BUY"><div class="count-num">${counts.BUY}</div><div class="count-lbl">BUY</div></div>`;
   html += `<div class="count-card count-SELL"><div class="count-num">${counts.SELL}</div><div class="count-lbl">SELL</div></div>`;
   html += `<div class="count-card count-HOLD"><div class="count-num">${counts.HOLD}</div><div class="count-lbl">HOLD</div></div>`;
   html += '</div>';
 
-  // ── Price chart ──
+  // ââ Price chart ââ
   html += `<div class="chart-card">
     <div class="chart-header">
       <div class="chart-title">Price &amp; Darvas Box + 50d SMA</div>
@@ -595,13 +596,13 @@ function renderCard(ticker, result) {
     <div class="chart-wrap"><canvas id="chart-price-${ticker}"></canvas></div>
   </div>`;
 
-  // ── Volume chart ──
+  // ââ Volume chart ââ
   html += `<div class="chart-card">
     <div class="chart-header"><div class="chart-title">Volume</div></div>
     <div class="chart-wrap"><canvas id="chart-vol-${ticker}"></canvas></div>
   </div>`;
 
-  // ── Signal history ──
+  // ââ Signal history ââ
   html += '<div class="history-card"><div class="history-title">Signal History</div>';
   if (signals.length === 0) {
     html += '<p style="color:var(--text-dim);font-size:13px">No signals generated yet.</p>';
@@ -613,7 +614,7 @@ function renderCard(ticker, result) {
         <td>${s.date}</td>
         <td><span class="sig-pill sig-${s.signal}">${s.signal}</span></td>
         <td>${fmt(s.close)}</td>
-        <td>${fmt(s.box_bottom)} – ${fmt(s.box_top)}</td>
+        <td>${fmt(s.box_bottom)} â ${fmt(s.box_top)}</td>
         <td title="${s.confidence}/5">${stars(s.confidence)}</td>
         <td>${s.vol_ratio ? s.vol_ratio.toFixed(2) + 'x' : 'N/A'}</td>
       </tr>`;
@@ -630,9 +631,9 @@ function renderCard(ticker, result) {
   renderVolChart(ticker, result, range);
 }
 
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 //  CHARTS
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 function renderPriceChart(ticker, result, rangeLabel) {
   const ctx = document.getElementById('chart-price-' + ticker);
   if (!ctx) return;
@@ -721,9 +722,9 @@ function renderVolChart(ticker, result, rangeLabel) {
   });
 }
 
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 //  MAIN LOAD
-// ──────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 let isLoading = false;
 
 async function loadTicker(ticker, forceRefresh = false) {
@@ -732,7 +733,7 @@ async function loadTicker(ticker, forceRefresh = false) {
     const result = computeEnhancedDarvas(raw);
     if (!result) {
       document.getElementById('panel-' + ticker).innerHTML =
-        '<div class="error-msg">⚠️ Insufficient data for ' + ticker + ' (need 55+ trading days).</div>';
+        '<div class="error-msg">â ï¸ Insufficient data for ' + ticker + ' (need 55+ trading days).</div>';
       return;
     }
     allData[ticker] = result;
@@ -740,7 +741,7 @@ async function loadTicker(ticker, forceRefresh = false) {
     renderCard(ticker, result);
   } catch (err) {
     const panel = document.getElementById('panel-' + ticker);
-    if (panel) panel.innerHTML = `<div class="error-msg">⚠️ Failed to load ${ticker}: ${err.message}</div>`;
+    if (panel) panel.innerHTML = `<div class="error-msg">â ï¸ Failed to load ${ticker}: ${err.message}</div>`;
     const tb = document.getElementById('tab-' + ticker);
     if (tb) { tb.querySelector('.tab-signal').textContent = 'ERR'; tb.querySelector('.tab-signal').className = 'tab-signal tab-signal-SELL'; }
   }
@@ -750,14 +751,14 @@ async function refreshAll() {
   if (isLoading) return;
   isLoading = true;
   const btn = document.getElementById('refresh-btn');
-  btn.disabled = true; btn.textContent = '⏳ Loading…';
-  document.getElementById('updated-time').textContent = 'Refreshing…';
+  btn.disabled = true; btn.textContent = 'â³ Loadingâ¦';
+  document.getElementById('updated-time').textContent = 'Refreshingâ¦';
   sessionStorage.clear();
   buildTabsSkeleton();
   await Promise.all(TICKERS.map(t => loadTicker(t, true)));
   switchTab(TICKERS[0]);
   document.getElementById('updated-time').textContent = 'Last updated: ' + new Date().toLocaleString();
-  btn.disabled = false; btn.textContent = '🔄 Refresh';
+  btn.disabled = false; btn.textContent = 'ð Refresh';
   isLoading = false;
 }
 

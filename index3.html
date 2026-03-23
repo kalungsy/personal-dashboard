@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RS Ranking Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #263247;
+  --border: #2d3f5e;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --buy: #26c96c;
+  --sell: #ef5350;
+  --hold: #ffa726;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+  --leader: rgba(38,201,108,0.07);
+  --laggard: rgba(239,83,80,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* ── NAV ── */
+.nav-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-bar a {
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background .15s, color .15s;
+}
+.nav-bar a:hover { background: var(--surface2); color: var(--text); }
+.nav-bar a.active {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* ── HEADER ── */
+.page-header {
+  padding: 20px 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.page-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.page-header .subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.last-updated {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.refresh-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background .15s;
+}
+.refresh-btn:hover { background: #334155; }
+.refresh-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── LOADING / ERROR ── */
+.loading-overlay {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-dim);
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--buy);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── LEADERBOARD TABLE ── */
+.section-label {
+  padding: 6px 16px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.table-wrap {
+  padding: 0 16px 16px;
+  overflow-x: auto;
+}
+table.leaderboard {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 580px;
+}
+table.leaderboard th {
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+table.leaderboard th:first-child,
+table.leaderboard th:nth-child(2),
+table.leaderboard th:nth-child(3) { text-align: left; }
+table.leaderboard td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+table.leaderboard td:first-child,
+table.leaderboard td:nth-child(2),
+table.leaderboard td:nth-child(3) { text-align: left; }
+table.leaderboard tr:last-child td { border-bottom: none; }
+table.leaderboard tr.row-buy  { background: var(--leader); }
+table.leaderboard tr.row-sell { background: var(--laggard); }
+table.leaderboard tr:hover { background: var(--surface2); }
+
+.rank-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 12px;
+  background: var(--surface2);
+  color: var(--text-dim);
+}
+.rank-num.top { background: rgba(38,201,108,.25); color: var(--buy); }
+.rank-num.bottom { background: rgba(239,83,80,.25); color: var(--sell); }
+
+.ticker-cell { font-weight: 700; font-size: 14px; }
+.signal-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.signal-badge.BUY  { background: rgba(38,201,108,.2); color: var(--buy); }
+.signal-badge.SELL { background: rgba(239,83,80,.2); color: var(--sell); }
+.signal-badge.HOLD { background: rgba(255,167,38,.15); color: var(--hold); }
+
+.rs-score { font-weight: 700; font-size: 14px; }
+.pos { color: var(--buy); }
+.neg { color: var(--sell); }
+.neu { color: var(--hold); }
+
+.trend-arrow { font-size: 14px; }
+
+/* ── BADGES ROW ── */
+.badges-row {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  flex-wrap: wrap;
+}
+.badge-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.badge-label { font-size: 10px; color: var(--text-dim); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.badge-tickers { display: flex; gap: 4px; flex-wrap: wrap; }
+.badge-ticker {
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.badge-ticker.leader { background: rgba(38,201,108,.2); color: var(--buy); border: 1px solid rgba(38,201,108,.3); }
+.badge-ticker.laggard { background: rgba(239,83,80,.2); color: var(--sell); border: 1px solid rgba(239,83,80,.3); }
+
+/* ── DETAIL CARDS ── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  padding: 0 16px;
+}
+.detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.card-ticker-name { display: flex; flex-direction: column; }
+.card-ticker { font-weight: 700; font-size: 16px; }
+.card-rank { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.card-badges { display: flex; gap: 6px; align-items: center; }
+.rs-badge {
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.rs-badge.pos { background: rgba(38,201,108,.15); color: var(--buy); border-color: rgba(38,201,108,.3); }
+.rs-badge.neg { background: rgba(239,83,80,.15); color: var(--sell); border-color: rgba(239,83,80,.3); }
+.rs-badge.neu { background: rgba(255,167,38,.1); color: var(--hold); border-color: rgba(255,167,38,.25); }
+
+.card-body { padding: 12px 14px; }
+
+.perf-section { margin-bottom: 14px; }
+.perf-title { font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.perf-bars { display: flex; gap: 8px; }
+.perf-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.perf-period { font-size: 10px; color: var(--text-dim); font-weight: 600; }
+.bar-pair { display: flex; gap: 3px; align-items: flex-end; height: 52px; }
+.bar {
+  width: 14px;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: height .3s ease;
+}
+.bar.ticker-bar { background: #7986cb; }
+.bar.spy-bar { background: #546e7a; }
+.perf-val { font-size: 10px; font-weight: 700; }
+
+.momentum-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface2);
+  border-radius: 6px;
+  padding: 7px 10px;
+  margin-bottom: 12px;
+}
+.momentum-label { font-size: 11px; color: var(--text-dim); }
+.momentum-val { font-size: 12px; font-weight: 700; }
+.momentum-val.up { color: var(--buy); }
+.momentum-val.down { color: var(--sell); }
+.momentum-val.flat { color: var(--hold); }
+
+.chart-section { position: relative; height: 70px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  .cards-grid { grid-template-columns: 1fr; }
+  .page-header h1 { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav-bar">
+  <a href="index.html">Standard</a>
+  <a href="index2.html">Enhanced</a>
+  <a href="index3.html" class="active">RS Ranking</a>
+</nav>
+
+<!-- HEADER -->
+<div class="page-header">
+  <div>
+    <h1>Relative Strength Ranking</h1>
+    <div class="subtitle">12 tickers ranked by RS Score vs S&amp;P 500 benchmark</div>
+  </div>
+  <div class="header-right">
+    <span class="last-updated" id="lastUpdated">Loading…</span>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">⟳ Refresh</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadingEl" class="loading-overlay">
+  <div class="spinner"></div>
+  <div>Fetching data for 13 tickers…</div>
+</div>
+
+<!-- MAIN CONTENT (hidden until loaded) -->
+<div id="mainContent" style="display:none">
+
+  <!-- LEADERS / LAGGARDS BADGES -->
+  <div class="badges-row" id="badgesRow"></div>
+
+  <!-- LEADERBOARD TABLE -->
+  <div class="section-label">📊 Leaderboard</div>
+  <div class="table-wrap">
+    <table class="leaderboard">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Ticker</th>
+          <th>Signal</th>
+          <th>RS Score</th>
+          <th>1W</th>
+          <th>1M</th>
+          <th>3M</th>
+          <th>6M</th>
+          <th>vs SPY</th>
+          <th>Trend</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+
+  <!-- DETAIL CARDS -->
+  <div class="section-label" style="margin-top:8px">📈 Ticker Detail</div>
+  <div class="cards-grid" id="cardsGrid"></div>
+
+</div>
+
+<script>
+const TICKERS = ['CVX','COP','OXY','NKE','UNH','TSLA','MSFT','AAPL','SOUN','ACHR','ROKU','IONQ'];
+const PROXY = 'https://corsproxy.io/?url=';
+const YF_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+
+// Weights for RS Score
+const W = { w1: 0.1, m1: 0.4, m3: 0.3, m6: 0.2 };
+
+function pct(closes, nDays) {
+  if (!closes || closes.length < 2) return null;
+  const n = Math.min(nDays, closes.length - 1);
+  const end = closes[closes.length - 1];
+  const start = closes[closes.length - 1 - n];
+  if (!start || start === 0) return null;
+  return (end - start) / start * 100;
+}
+
+async function fetchTicker(ticker) {
+  const url = `${PROXY}${encodeURIComponent(YF_BASE + ticker + '?interval=1d&range=6mo')}`;
+  const r = await fetch(url);
+  const j = await r.json();
+  const result = j?.chart?.result?.[0];
+  if (!result) return null;
+  const closes = result.indicators?.quote?.[0]?.close;
+  // filter nulls
+  const filtered = closes?.filter(c => c != null) ?? [];
+  return filtered;
+}
+
+function computeRS(tickerCloses, spyCloses) {
+  const r1w  = pct(tickerCloses, 5);
+  const r1m  = pct(tickerCloses, 21);
+  const r3m  = pct(tickerCloses, 63);
+  const r6m  = pct(tickerCloses, 126);
+  const s1w  = pct(spyCloses, 5);
+  const s1m  = pct(spyCloses, 21);
+  const s3m  = pct(spyCloses, 63);
+  const s6m  = pct(spyCloses, 126);
+
+  const rs1w = r1w != null && s1w != null ? r1w - s1w : 0;
+  const rs1m = r1m != null && s1m != null ? r1m - s1m : 0;
+  const rs3m = r3m != null && s3m != null ? r3m - s3m : 0;
+  const rs6m = r6m != null && s6m != null ? r6m - s6m : 0;
+
+  const score = W.w1 * rs1w + W.m1 * rs1m + W.m3 * rs3m + W.m6 * rs6m;
+
+  return {
+    score,
+    rs1w, rs1m, rs3m, rs6m,
+    r1w, r1m, r3m, r6m,
+    s1w, s1m, s3m, s6m
+  };
+}
+
+// Rolling RS over last 20 days
+function rollingRS(tickerCloses, spyCloses, days=20) {
+  const result = [];
+  for (let offset = days; offset >= 0; offset--) {
+    const tSlice = tickerCloses.slice(0, tickerCloses.length - offset || undefined);
+    const sSlice = spyCloses.slice(0, spyCloses.length - offset || undefined);
+    const rs = computeRS(tSlice, sSlice);
+    result.push(rs.score);
+  }
+  return result;
+}
+
+function getSignal(score, rolling) {
+  const trending = rolling.length >= 6
+    ? rolling[rolling.length-1] > rolling[rolling.length-6]
+    : true;
+  const trendingDown = rolling.length >= 6
+    ? rolling[rolling.length-1] < rolling[rolling.length-6]
+    : false;
+  if (score > 5 && trending) return 'BUY';
+  if (score < -5 && trendingDown) return 'SELL';
+  return 'HOLD';
+}
+
+function fmt(v, digits=1) {
+  if (v == null) return '—';
+  const s = (v >= 0 ? '+' : '') + v.toFixed(digits) + '%';
+  return s;
+}
+
+function colorClass(v) {
+  if (v == null) return 'neu';
+  if (v > 0.3) return 'pos';
+  if (v < -0.3) return 'neg';
+  return 'neu';
+}
+
+function buildBadgesRow(ranked) {
+  const leaders = ranked.slice(0, 3);
+  const laggards = ranked.slice(-3).reverse();
+  const el = document.getElementById('badgesRow');
+  el.innerHTML = `
+    <div class="badge-group">
+      <div class="badge-label">🏆 Leaders</div>
+      <div class="badge-tickers">${leaders.map(t=>`<span class="badge-ticker leader">${t.ticker}</span>`).join('')}</div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="badge-group">
+      <div class="badge-label">🔻 Laggards</div>
+      <div class="badge-tickers">${laggards.map(t=>`<span class="badge-ticker laggard">${t.ticker}</span>`).join('')}</div>
+    </div>
+  `;
+}
+
+function buildTable(ranked) {
+  const tbody = document.getElementById('leaderboardBody');
+  tbody.innerHTML = ranked.map((d, i) => {
+    const rank = i + 1;
+    const rankClass = rank <= 3 ? 'top' : rank >= 10 ? 'bottom' : '';
+    const rowClass = d.signal === 'BUY' ? 'row-buy' : d.signal === 'SELL' ? 'row-sell' : '';
+    const sigEmoji = d.signal === 'BUY' ? '🟢' : d.signal === 'SELL' ? '🔴' : '🟡';
+    const trendArrow = d.trending ? '↑' : d.trendingDown ? '↓' : '→';
+    const trendColor = d.trending ? 'pos' : d.trendingDown ? 'neg' : 'neu';
+    const vsspy = d.rs.score;
+    return `<tr class="${rowClass}">
+      <td><span class="rank-num ${rankClass}">${rank}</span></td>
+      <td class="ticker-cell">${d.ticker}</td>
+      <td><span class="signal-badge ${d.signal}">${sigEmoji} ${d.signal}</span></td>
+      <td class="rs-score ${colorClass(d.rs.score)}">${fmt(d.rs.score)}</td>
+      <td class="${colorClass(d.rs.r1w)}">${fmt(d.rs.r1w)}</td>
+      <td class="${colorClass(d.rs.r1m)}">${fmt(d.rs.r1m)}</td>
+      <td class="${colorClass(d.rs.r3m)}">${fmt(d.rs.r3m)}</td>
+      <td class="${colorClass(d.rs.r6m)}">${fmt(d.rs.r6m)}</td>
+      <td class="${colorClass(vsspy)}">${fmt(vsspy)}</td>
+      <td class="trend-arrow ${trendColor}">${trendArrow}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildBars(ticker, spy, period, nDays) {
+  const tv = pct(ticker, nDays);
+  const sv = pct(spy, nDays);
+  const max = Math.max(Math.abs(tv||0), Math.abs(sv||0), 1);
+  const scale = 44 / max;
+  const th = Math.max(2, Math.abs((tv||0) * scale));
+  const sh = Math.max(2, Math.abs((sv||0) * scale));
+  const tc = tv == null ? '#546e7a' : tv >= 0 ? '#7986cb' : '#ef9a9a';
+  const sc = sv == null ? '#546e7a' : sv >= 0 ? '#546e7a' : '#ef9a9a';
+  return `
+    <div class="perf-col">
+      <div class="perf-period">${period}</div>
+      <div class="bar-pair">
+        <div class="bar ticker-bar" style="height:${th}px;background:${tc}" title="${ticker}: ${fmt(tv)}"></div>
+        <div class="bar spy-bar" style="height:${sh}px;background:${sc}" title="SPY: ${fmt(sv)}"></div>
+      </div>
+      <div class="perf-val ${colorClass(tv)}">${fmt(tv,1)}</div>
+    </div>`;
+}
+
+function buildCards(ranked, spyCloses) {
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML = '';
+  ranked.forEach((d, i) => {
+    const rank = i + 1;
+    const sigEmoji = d.signal === 'BUY' ? '🟢' : d.signal === 'SELL' ? '🔴' : '🟡';
+    const rsClass = d.rs.score > 0 ? 'pos' : d.rs.score < 0 ? 'neg' : 'neu';
+    const momClass = d.trending ? 'up' : d.trendingDown ? 'down' : 'flat';
+    const momText = d.trending ? '↑ Strengthening' : d.trendingDown ? '↓ Weakening' : '→ Neutral';
+
+    const card = document.createElement('div');
+    card.className = 'detail-card';
+    card.id = `card-${d.ticker}`;
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-ticker-name">
+          <span class="card-ticker">${d.ticker}</span>
+          <span class="card-rank">Rank #${rank} of 12</span>
+        </div>
+        <div class="card-badges">
+          <span class="signal-badge ${d.signal}">${sigEmoji} ${d.signal}</span>
+          <span class="rs-badge ${rsClass}">${fmt(d.rs.score)}</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="momentum-row">
+          <span class="momentum-label">Momentum (5d RS trend)</span>
+          <span class="momentum-val ${momClass}">${momText}</span>
+        </div>
+        <div class="perf-section">
+          <div class="perf-title">Performance vs SPY <span style="color:#7986cb">■</span> Ticker <span style="color:#546e7a">■</span> SPY</div>
+          <div class="perf-bars" id="bars-${d.ticker}">
+            ${buildBars(d.closes, spyCloses, '1W', 5)}
+            ${buildBars(d.closes, spyCloses, '1M', 21)}
+            ${buildBars(d.closes, spyCloses, '3M', 63)}
+            ${buildBars(d.closes, spyCloses, '6M', 126)}
+          </div>
+        </div>
+        <div class="perf-title" style="margin-bottom:6px">RS Score Trend (20 days)</div>
+        <div class="chart-section">
+          <canvas id="chart-${d.ticker}" height="70"></canvas>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+
+    // Render trend chart
+    requestAnimationFrame(() => {
+      const ctx = document.getElementById(`chart-${d.ticker}`);
+      if (!ctx) return;
+      const labels = d.rolling.map((_, idx) => idx);
+      const positive = d.rolling.map(v => v >= 0 ? v : null);
+      const negative = d.rolling.map(v => v < 0 ? v : null);
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              data: positive,
+              borderColor: '#26c96c',
+              backgroundColor: 'rgba(38,201,108,.1)',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: true,
+              spanGaps: false,
+              tension: 0.3
+            },
+            {
+              data: negative,
+              borderColor: '#ef5350',
+              backgroundColor: 'rgba(239,83,80,.1)',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: true,
+              spanGaps: false,
+              tension: 0.3
+            },
+            {
+              data: d.rolling,
+              borderColor: 'rgba(255,255,255,.25)',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: false,
+              spanGaps: true,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: {
+            x: { display: false },
+            y: {
+              display: true,
+              grid: { color: 'rgba(45,63,94,.5)', drawBorder: false },
+              ticks: {
+                color: '#94a3b8',
+                font: { size: 9 },
+                maxTicksLimit: 4,
+                callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%'
+              }
+            }
+          }
+        }
+      });
+    });
+  });
+}
+
+async function loadAll() {
+  const btn = document.getElementById('refreshBtn');
+  const loading = document.getElementById('loadingEl');
+  const main = document.getElementById('mainContent');
+  btn.disabled = true;
+  btn.textContent = '⟳ Loading…';
+  loading.style.display = 'block';
+  main.style.display = 'none';
+
+  try {
+    // Fetch SPY + all 12 tickers in parallel
+    const allTickers = ['SPY', ...TICKERS];
+    const results = await Promise.allSettled(allTickers.map(fetchTicker));
+
+    const spyCloses = results[0].status === 'fulfilled' ? results[0].value : null;
+    if (!spyCloses || spyCloses.length < 10) throw new Error('Failed to fetch SPY data');
+
+    const tickerData = [];
+    TICKERS.forEach((ticker, i) => {
+      const closes = results[i + 1].status === 'fulfilled' ? results[i + 1].value : null;
+      if (!closes || closes.length < 5) {
+        tickerData.push({ ticker, closes: [], rs: { score: 0, r1w:null,r1m:null,r3m:null,r6m:null,rs1w:0,rs1m:0,rs3m:0,rs6m:0 }, signal: 'HOLD', rolling: [], trending: false, trendingDown: false });
+        return;
+      }
+      const rs = computeRS(closes, spyCloses);
+      const rolling = rollingRS(closes, spyCloses, 20);
+      const trending = rolling.length >= 6 && rolling[rolling.length-1] > rolling[rolling.length-6];
+      const trendingDown = rolling.length >= 6 && rolling[rolling.length-1] < rolling[rolling.length-6];
+      const signal = getSignal(rs.score, rolling);
+      tickerData.push({ ticker, closes, rs, signal, rolling, trending, trendingDown });
+    });
+
+    // Sort by RS Score descending
+    tickerData.sort((a, b) => b.rs.score - a.rs.score);
+
+    // Render
+    buildBadgesRow(tickerData);
+    buildTable(tickerData);
+    buildCards(tickerData, spyCloses);
+
+    const now = new Date();
+    document.getElementById('lastUpdated').textContent =
+      'Updated ' + now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+    loading.style.display = 'none';
+    main.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = `<div style="color:#ef5350;font-size:14px">⚠️ Error loading data: ${err.message}</div>
+      <button class="refresh-btn" style="margin-top:12px" onclick="loadAll()">Retry</button>`;
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⟳ Refresh';
+  }
+}
+
+// Auto-load on page open
+loadAll();
+</script>
+</body>
+</html>

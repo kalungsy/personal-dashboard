@@ -437,11 +437,12 @@ function detectSignals(rsi, sma, closes) {
 
 // ─── Current Signal ──────────────────────────────────────────────────────────
 function getCurrentSignal(rsi, sma, closes, signals) {
-  const lastRSI = rsi[rsi.length - 1];
-  const lastSMA = sma[sma.length - 1];
-  const lastClose = closes[closes.length - 1];
+  const lastRSI = rsi.length > 0 ? (rsi[rsi.length - 1] ?? null) : null;
+  const lastSMA = sma.length > 0 ? (sma[sma.length - 1] ?? null) : null;
+  const lastClose = closes.length > 0 ? closes[closes.length - 1] : null;
   const lastSignal = signals.length > 0 ? signals[signals.length - 1] : null;
 
+  if (lastRSI == null || lastSMA == null || lastClose == null) return 'HOLD';
   if (lastRSI < 30 && lastClose > lastSMA) return 'BUY';
   if (lastRSI > 70 && lastClose < lastSMA) return 'SELL';
   // Also show BUY if last signal was BUY and RSI < 50 (still in recovery)
@@ -451,6 +452,7 @@ function getCurrentSignal(rsi, sma, closes, signals) {
 
 // ─── RSI Zone ────────────────────────────────────────────────────────────────
 function getRSIZone(rsiVal) {
+  if (rsiVal == null) return { label: 'No Data', cls: 'zone-neutral' };
   if (rsiVal < 30) return { label: 'Oversold', cls: 'zone-oversold' };
   if (rsiVal < 50) return { label: 'Recovering', cls: 'zone-recovering' };
   if (rsiVal <= 70) return { label: 'Neutral / Bullish', cls: 'zone-neutral' };
@@ -462,6 +464,9 @@ async function fetchOHLCV(ticker) {
   const url = `https://corsproxy.io/?url=https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=6mo`;
   const r = await fetch(url);
   const j = await r.json();
+  if (!j.chart || !j.chart.result || !j.chart.result[0]) {
+    throw new Error('No data returned from API');
+  }
   const result = j.chart.result[0];
   const timestamps = result.timestamp;
   const closes = result.indicators.quote[0].close;
@@ -840,7 +845,8 @@ function buildPanel(ticker, data) {
   const sma = calcSMA(closes, SMA_PERIOD);
   const signals = detectSignals(rsi, sma, closes);
   const currentSignal = getCurrentSignal(rsi, sma, closes, signals);
-  const lastRSI = rsi[rsi.length - 1];
+  // Guard: rsi may be empty or all-null if data is too short
+  const lastRSI = rsi.length > 0 ? (rsi[rsi.length - 1] ?? null) : null;
   const zone = getRSIZone(lastRSI);
 
   const lastBuySignal = [...signals].reverse().find(s => s.type === 'BUY');
@@ -852,7 +858,7 @@ function buildPanel(ticker, data) {
   const badgeCls = `badge-${signalCls}`;
   const cardCls = `${signalCls}-card`;
 
-  const rsiStr = lastRSI !== null ? lastRSI.toFixed(1) : '—';
+  const rsiStr = lastRSI != null ? lastRSI.toFixed(1) : '—';
 
   // Signal history
   const history = buildSignalHistory(signals, dates, closes);

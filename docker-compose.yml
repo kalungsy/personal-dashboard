@@ -1,0 +1,9 @@
+# Local production-like run: docker compose up --build
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: "8000"
+      CORS_ORIGINS: "http://localhost:5173,http://localhost:8000"

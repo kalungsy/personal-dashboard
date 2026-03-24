@@ -1,0 +1,28 @@
+# Fly.io config (infra as code). First time: `fly launch` from repo root (merges this file).
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "personal-dashboard" # rename after `fly apps create` or via launch
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "15s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

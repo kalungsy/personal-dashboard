@@ -1,0 +1,20 @@
+# Render Blueprint (infra as code): https://render.com/docs/blueprint-spec
+# Deploy: Dashboard → New + → Blueprint → connect repo (see docs/RENDER_MCP.md).
+# Manage / observe with Render MCP: https://render.com/docs/mcp-server
+
+services:
+  - type: web
+    name: personal-dashboard
+    runtime: docker
+    plan: free
+    region: oregon
+    # branch: main  # optional; omit to use the repo’s default branch
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    # Optional: set via Dashboard or Render MCP (e.g. split UI/API later).
+    # envVars:
+    #   - key: CORS_ORIGINS
+    #     sync: false
+    #   - key: SIGNALS_JSON
+    #     sync: false

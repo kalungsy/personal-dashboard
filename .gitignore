@@ -1,0 +1,57 @@
+# --- Secrets & local-only Cursor config ---
+.cursor/mcp.json
+
+# --- Python ---
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+dashboard/.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
+# --- Node / Vite (dashboard client) ---
+dashboard/client/node_modules/
+dashboard/client/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dashboard/client/.vite/
+
+# --- Environment files ---
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Editors / IDEs ---
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Logs & test coverage ---
+*.log
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.cache/
+
+# --- Local Docker overrides (optional per-developer) ---
+docker-compose.override.yml

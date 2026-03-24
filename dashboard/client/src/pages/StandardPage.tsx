@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Line, Bar } from "react-chartjs-2";
 import { COLORS, RANGES, TICKERS } from "../constants";
-import { fetchSignals } from "../api/client";
+import { DEFAULT_CHART_RANGE, fetchChart, fetchSignals, type YahooChartRow } from "../api/client";
 import { fmt, fmtVol, sliceStartByRange } from "../lib/format";
 import type { SignalRow, TickerBundle } from "../types/signals";
 
@@ -14,18 +14,27 @@ function StandardCharts({
   tdata,
   rangeLabel,
   onRangeChange,
+  liveSeries,
 }: {
   ticker: string;
   tdata: TickerBundle;
   rangeLabel: string;
   onRangeChange: (label: string) => void;
+  /** Live Yahoo OHLCV (~2y); when missing, falls back to signals.json price_history / signals only */
+  liveSeries?: YahooChartRow | null;
 }) {
   const ph = tdata.price_history;
   const sigs = tdata.signals || [];
-  const allLabels = ph ? ph.dates : sigs.map((s) => s.date);
-  const allCloses = ph ? ph.close : sigs.map((s) => s.close);
-  const boxTop = ph ? ph.box_top : sigs[0]?.box_top ?? null;
-  const boxBot = ph ? ph.box_bottom : sigs[0]?.box_bottom ?? null;
+  const latest = latestSignal(sigs);
+  const useLive = Boolean(liveSeries && liveSeries.dates.length > 0);
+  const allLabels = useLive
+    ? liveSeries!.dates
+    : ph
+      ? ph.dates
+      : sigs.map((s) => s.date);
+  const allCloses = useLive ? liveSeries!.closes : ph ? ph.close : sigs.map((s) => s.close);
+  const boxTop = latest?.box_top ?? ph?.box_top ?? sigs[0]?.box_top ?? null;
+  const boxBot = latest?.box_bottom ?? ph?.box_bottom ?? sigs[0]?.box_bottom ?? null;
 
   const start = sliceStartByRange(allLabels.length, rangeLabel);
   const labels = allLabels.slice(start);
@@ -41,7 +50,7 @@ function StandardCharts({
   const dotColors = labels.map((d) => (sigMap[d] ? COLORS[sigMap[d].signal as keyof typeof COLORS] || "#888" : "transparent"));
   const maxTicks = labels.length <= 5 ? labels.length : 8;
 
-  const allVols = ph ? ph.volume : sigs.map((s) => s.volume);
+  const allVols = useLive ? liveSeries!.volumes : ph ? ph.volume : sigs.map((s) => s.volume);
   const fullAvg = allVols.map((_, i) => {
     const w = allVols.slice(Math.max(0, i - 19), i + 1);
     return parseFloat((w.reduce((a, b) => a + b, 0) / w.length).toFixed(0));
@@ -143,7 +152,14 @@ function StandardCharts({
     <>
       <div className="chart-card">
         <div className="chart-header">
-          <div className="chart-title">Price &amp; Darvas Box</div>
+          <div className="chart-title">
+            Price &amp; Darvas Box
+            {useLive ? (
+              <span className="subtitle" style={{ display: "block", fontWeight: 400, marginTop: 4 }}>
+                Daily history: live (~{DEFAULT_CHART_RANGE}); box &amp; signals from snapshot
+              </span>
+            ) : null}
+          </div>
           <div className="range-btns">
             {RANGES.map((r) => (
               <button
@@ -240,12 +256,36 @@ export function StandardPage() {
   const [ranges, setRanges] = useState<Record<string, string>>(() =>
     Object.fromEntries(TICKERS.map((t) => [t, "3M"])),
   );
+  const [liveByTicker, setLiveByTicker] = useState<Record<string, YahooChartRow | null>>({});
 
   useEffect(() => {
     fetchSignals()
       .then((j) => setData(j as Record<string, TickerBundle>))
       .catch((e: Error) => setErr(e.message));
   }, []);
+
+  useEffect(() => {
+    if (!data) return;
+    let cancelled = false;
+    void (async () => {
+      const entries = await Promise.all(
+        TICKERS.map(async (t) => {
+          try {
+            const row = await fetchChart(t, DEFAULT_CHART_RANGE);
+            return [t, row] as const;
+          } catch {
+            return [t, null] as const;
+          }
+        }),
+      );
+      if (!cancelled) {
+        setLiveByTicker(Object.fromEntries(entries) as Record<string, YahooChartRow | null>);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
 
   const updatedText = useMemo(() => {
     if (!data) return "Loading…";
@@ -373,6 +413,7 @@ export function StandardPage() {
                   tdata={td}
                   rangeLabel={rangeLabel}
                   onRangeChange={(label) => setRanges((prev) => ({ ...prev, [t]: label }))}
+                  liveSeries={liveByTicker[t]}
                 />
               ) : null}
               <div className="history-card">

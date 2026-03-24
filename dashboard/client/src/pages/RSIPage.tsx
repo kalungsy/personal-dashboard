@@ -79,26 +79,26 @@ function RSICharts({ p }: { p: Panel }) {
 
   const labels = slicedDates.map((d) => `${d.getMonth() + 1}/${d.getDate()}`);
 
-  const buyPoints = slicedRSI.map((v, i) => {
+  const buyPoints = slicedRSI.map((_, i) => {
     const g = startIdx + i;
     const sig = p.signals.find((s) => s.idx === g && s.type === "BUY");
-    return sig ? v : null;
+    return sig ? sig.rsi : null;
   });
-  const sellPoints = slicedRSI.map((v, i) => {
+  const sellPoints = slicedRSI.map((_, i) => {
     const g = startIdx + i;
     const sig = p.signals.find((s) => s.idx === g && s.type === "SELL");
-    return sig ? v : null;
+    return sig ? sig.rsi : null;
   });
 
-  const buyPrice = slicedCloses.map((v, i) => {
+  const buyPrice = slicedCloses.map((_, i) => {
     const g = startIdx + i;
     const sig = p.signals.find((s) => s.idx === g && s.type === "BUY");
-    return sig ? v : null;
+    return sig ? sig.price : null;
   });
-  const sellPrice = slicedCloses.map((v, i) => {
+  const sellPrice = slicedCloses.map((_, i) => {
     const g = startIdx + i;
     const sig = p.signals.find((s) => s.idx === g && s.type === "SELL");
-    return sig ? v : null;
+    return sig ? sig.price : null;
   });
 
   const rsiData = {
@@ -112,31 +112,35 @@ function RSICharts({ p }: { p: Panel }) {
         pointRadius: 0,
         fill: false,
         tension: 0.3,
-        order: 3,
+        order: 1,
       },
       {
         label: "BUY",
         data: buyPoints,
-        borderColor: "transparent",
+        borderColor: "#0d3d22",
         backgroundColor: "#26c96c",
         pointRadius: 7,
         pointHoverRadius: 9,
+        pointBorderWidth: 1.5,
+        pointBorderColor: "rgba(15,23,42,0.9)",
         pointStyle: "triangle" as const,
         fill: false,
         showLine: false,
-        order: 1,
+        order: 10,
       },
       {
         label: "SELL",
         data: sellPoints,
-        borderColor: "transparent",
+        borderColor: "#5c1614",
         backgroundColor: "#ef5350",
         pointRadius: 7,
         pointHoverRadius: 9,
+        pointBorderWidth: 1.5,
+        pointBorderColor: "rgba(15,23,42,0.9)",
         pointStyle: "rectRot" as const,
         fill: false,
         showLine: false,
-        order: 2,
+        order: 11,
       },
     ],
   };
@@ -152,7 +156,7 @@ function RSICharts({ p }: { p: Panel }) {
         pointRadius: 0,
         fill: false,
         tension: 0.3,
-        order: 3,
+        order: 1,
       },
       {
         label: "20d SMA",
@@ -163,31 +167,35 @@ function RSICharts({ p }: { p: Panel }) {
         pointRadius: 0,
         fill: false,
         tension: 0.3,
-        order: 4,
+        order: 2,
       },
       {
         label: "BUY",
         data: buyPrice,
-        borderColor: "transparent",
+        borderColor: "#0d3d22",
         backgroundColor: "#26c96c",
         pointRadius: 7,
         pointHoverRadius: 9,
+        pointBorderWidth: 1.5,
+        pointBorderColor: "rgba(15,23,42,0.9)",
         pointStyle: "triangle" as const,
         fill: false,
         showLine: false,
-        order: 1,
+        order: 10,
       },
       {
         label: "SELL",
         data: sellPrice,
-        borderColor: "transparent",
+        borderColor: "#5c1614",
         backgroundColor: "#ef5350",
         pointRadius: 7,
         pointHoverRadius: 9,
+        pointBorderWidth: 1.5,
+        pointBorderColor: "rgba(15,23,42,0.9)",
         pointStyle: "rectRot" as const,
         fill: false,
         showLine: false,
-        order: 2,
+        order: 11,
       },
     ],
   };
@@ -492,9 +500,9 @@ export function RSIPage() {
                   </div>
                 </div>
                 <RSICharts p={p} />
-                <div className="history-card" style={{ marginTop: 12 }}>
+                  <div className="history-card" style={{ marginTop: 12 }}>
                   <div className="chart-title" style={{ marginBottom: 10 }}>
-                    Signal history (last 6 months)
+                    Signal history (RSI 30 / 70 crossovers, loaded range)
                   </div>
                   <table>
                     <thead>
@@ -510,7 +518,7 @@ export function RSIPage() {
                       {p.history.length === 0 ? (
                         <tr>
                           <td colSpan={5} className="subtitle" style={{ textAlign: "center" }}>
-                            No crossover signals in last 6 months
+                            No RSI 30/70 crossovers in this range
                           </td>
                         </tr>
                       ) : (

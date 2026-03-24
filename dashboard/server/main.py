@@ -44,19 +44,32 @@ def _normalize_yahoo_payload(data: dict) -> dict:
     closes = q.get("close") or []
     volumes = q.get("volume") or []
 
+    def _get(arr: list, idx: int):
+        if idx < 0 or idx >= len(arr):
+            return None
+        return arr[idx]
+
     rows = []
     for i, ts in enumerate(timestamps):
-        o, h, l, c, v = opens[i], highs[i], lows[i], closes[i], volumes[i]
-        if c is None or h is None or l is None:
+        c = _get(closes, i)
+        if c is None:
             continue
+        o = _get(opens, i)
+        h = _get(highs, i)
+        l = _get(lows, i)
+        v = _get(volumes, i)
+        # Yahoo often leaves high/low/open null on some bars; keep the day so history length matches other tickers
+        o = o if o is not None else c
+        h = h if h is not None else c
+        l = l if l is not None else c
         d = __import__("datetime").datetime.utcfromtimestamp(int(ts))
         rows.append(
             {
                 "date": d.strftime("%Y-%m-%d"),
-                "open": o,
-                "high": h,
-                "low": l,
-                "close": c,
+                "open": float(o),
+                "high": float(h),
+                "low": float(l),
+                "close": float(c),
                 "volume": int(v) if v is not None else 0,
             }
         )
@@ -76,7 +89,7 @@ def _normalize_yahoo_payload(data: dict) -> dict:
     }
 
 
-async def _fetch_chart(ticker: str, time_range: str = "6mo", interval: str = "1d") -> dict:
+async def _fetch_chart(ticker: str, time_range: str = "2y", interval: str = "1d") -> dict:
     url = f"{YAHOO_CHART.format(ticker=ticker.upper())}?interval={interval}&range={time_range}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         r = await client.get(
@@ -101,7 +114,7 @@ def health():
 @app.get("/api/chart/{ticker}")
 async def get_chart(
     ticker: str,
-    time_range: str = Query("6mo", alias="range"),
+    time_range: str = Query("2y", alias="range"),
     interval: str = "1d",
 ):
     """Proxy Yahoo chart API; returns aligned OHLCV arrays (same shape as legacy frontends)."""
@@ -121,7 +134,7 @@ def get_signals():
 @app.get("/api/closes/{ticker}")
 async def get_closes_only(
     ticker: str,
-    time_range: str = Query("6mo", alias="range"),
+    time_range: str = Query("2y", alias="range"),
 ):
     """Lightweight series for RS ranking (closes only)."""
     full = await _fetch_chart(ticker, time_range=time_range)

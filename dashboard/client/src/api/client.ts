@@ -12,14 +12,17 @@ export type YahooChartRow = {
   volumes: number[];
 };
 
-export async function fetchChart(ticker: string, range = "6mo"): Promise<YahooChartRow> {
+/** Daily history length from Yahoo; 2y ≈ 500 trading days (enough for 50d SMA + long charts). */
+export const DEFAULT_CHART_RANGE = "2y";
+
+export async function fetchChart(ticker: string, range = DEFAULT_CHART_RANGE): Promise<YahooChartRow> {
   const r = await fetch(`${base()}/api/chart/${encodeURIComponent(ticker)}?range=${range}`);
   if (!r.ok) throw new Error(`${ticker}: HTTP ${r.status}`);
   return r.json();
 }
 
 export async function fetchCloses(ticker: string): Promise<number[]> {
-  const r = await fetch(`${base()}/api/closes/${encodeURIComponent(ticker)}?range=6mo`);
+  const r = await fetch(`${base()}/api/closes/${encodeURIComponent(ticker)}?range=${DEFAULT_CHART_RANGE}`);
   if (!r.ok) throw new Error(`${ticker}: HTTP ${r.status}`);
   const j = await r.json();
   return j.closes as number[];

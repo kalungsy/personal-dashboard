@@ -19,6 +19,15 @@ export const TICKERS = [
   "QCOM",
   "GLD",
   "LMT",
+  "ANET",
+  "WMT",
+  "WM",
+  "EXPE",
+  "NVDA",
+  "NET",
+  "NFLX",
+  "META",
+  "CEG",
 ] as const;
 
 export type Ticker = (typeof TICKERS)[number];

@@ -12,6 +12,7 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -141,7 +142,40 @@ async def get_closes_only(
     return {"ticker": full["ticker"], "closes": full["closes"]}
 
 
-# Production: serve Vite build from dashboard/client/dist (run `npm run build` in client/)
+# Production: serve Vite build from dashboard/client/dist (run `npm run build` in client)
+# Render (Docker web) has no static "rewrite to index.html" — we must SPA-fallback here so
+# direct loads / refresh on /rsi, /enhanced, etc. work.
 _DIST = REPO_ROOT / "dashboard" / "client" / "dist"
-if _DIST.is_dir():
-    app.mount("/", StaticFiles(directory=str(_DIST), html=True), name="spa")
+_DIST_INDEX = _DIST / "index.html"
+
+
+def _safe_dist_file(relative_path: str) -> Path | None:
+    """Return a file under _DIST if it exists, else None (no path traversal)."""
+    rel = relative_path.strip().strip("/")
+    if not rel or any(p == ".." for p in rel.replace("\\", "/").split("/")):
+        return None
+    candidate = (_DIST / rel).resolve()
+    try:
+        candidate.relative_to(_DIST.resolve())
+    except ValueError:
+        return None
+    return candidate if candidate.is_file() else None
+
+
+if _DIST.is_dir() and _DIST_INDEX.is_file():
+    _assets = _DIST / "assets"
+    if _assets.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(_assets)), name="assets")
+
+    @app.get("/")
+    def spa_index():
+        return FileResponse(_DIST_INDEX)
+
+    @app.get("/{full_path:path}")
+    def spa_or_static(full_path: str):
+        if full_path == "api" or full_path.startswith("api/"):
+            raise HTTPException(404, "Not found")
+        f = _safe_dist_file(full_path)
+        if f is not None:
+            return FileResponse(f)
+        return FileResponse(_DIST_INDEX)

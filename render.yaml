@@ -1,6 +1,9 @@
 # Render Blueprint (infra as code): https://render.com/docs/blueprint-spec
 # Deploy: Dashboard → New + → Blueprint → connect repo (see docs/RENDER_MCP.md).
 # Manage / observe with Render MCP: https://render.com/docs/mcp-server
+#
+# SPA: Docker web services do not use Render static-site redirects. Client routes (/rsi, /enhanced,
+# etc.) are handled by FastAPI — see dashboard/server/main.py (index.html fallback + /assets mount).
 
 services:
   - type: web

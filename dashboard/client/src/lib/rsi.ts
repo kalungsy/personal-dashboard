@@ -40,20 +40,24 @@ export function calcSMA(closes: number[], period: number): (number | null)[] {
 
 export type RSISignalPoint = { idx: number; type: "BUY" | "SELL"; rsi: number; price: number };
 
+/**
+ * RSI mean-reversion *events* for history/charts: cross up through 30 (BUY) and cross down through 70 (SELL).
+ * We intentionally do not require price vs 20d SMA here — that filter removed almost all crossovers in real
+ * data, so signal history stayed empty while the badge still showed BUY/SELL from raw RSI zones.
+ */
 export function detectSignals(
   rsi: (number | null)[],
-  sma: (number | null)[],
+  _sma: (number | null)[],
   closes: number[],
 ): RSISignalPoint[] {
   const signals: RSISignalPoint[] = [];
   for (let i = 1; i < rsi.length; i++) {
-    if (rsi[i] === null || rsi[i - 1] === null || sma[i] === null) continue;
+    if (rsi[i] === null || rsi[i - 1] === null) continue;
     const ri = rsi[i] as number;
     const rim1 = rsi[i - 1] as number;
-    const sm = sma[i] as number;
-    if (rim1 < 30 && ri >= 30 && closes[i] > sm) {
+    if (rim1 < 30 && ri >= 30) {
       signals.push({ idx: i, type: "BUY", rsi: ri, price: closes[i] });
-    } else if (rim1 >= 70 && ri < 70 && closes[i] < sm) {
+    } else if (rim1 >= 70 && ri < 70) {
       signals.push({ idx: i, type: "SELL", rsi: ri, price: closes[i] });
     }
   }

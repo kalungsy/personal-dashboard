@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-03-21 17:10",
+  "last_updated": "2026-05-01 22:38",
   "signals": [
     {
       "date": "2026-03-21",
@@ -12,6 +12,17 @@
       "volume": 38890000,
       "avg_volume": 9810000,
       "note": "Data sourced via web search; yfinance unavailable in sandbox (pip proxy blocked)."
+    },
+    {
+      "date": "2026-05-01",
+      "close": 370.48,
+      "signal": "HOLD",
+      "reason": "Price ($370.48) is inside the new post-earnings box ($356\u2013$372). UNH surged ~14.5% after Q1 beat (adj. EPS $7.23 vs estimates) and raised full-year guidance. New box forming as price consolidates. Day range $363.00\u2013$371.99 with price near top of range \u2014 watch for breakout above $372.",
+      "box_top": 372.0,
+      "box_bottom": 356.0,
+      "volume": null,
+      "avg_volume": 5536457,
+      "note": "Data sourced via web search; yfinance unavailable in sandbox. Box estimated from recent week price action (~+4% WoW from ~$356). 20-day avg volume from search data."
     }
   ]
 }

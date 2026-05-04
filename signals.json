@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-05-01 22:38",
+  "last_updated": "2026-05-04 12:08",
   "signals": [
     {
       "date": "2026-03-21",
@@ -23,6 +23,17 @@
       "volume": null,
       "avg_volume": 5536457,
       "note": "Data sourced via web search; yfinance unavailable in sandbox. Box estimated from recent week price action (~+4% WoW from ~$356). 20-day avg volume from search data."
+    },
+    {
+      "date": "2026-05-04",
+      "close": 368.78,
+      "signal": "HOLD",
+      "reason": "Price ($368.78) is inside the box ($356-$372). Intraday high of $372.90 briefly pierced the ceiling but close pulled back \u2014 no confirmed breakout. Slight drift from prior close ($370.48, -0.46%). Continue watching for a decisive close above $372 for BUY or below $356 for SELL.",
+      "box_top": 372.0,
+      "box_bottom": 356.0,
+      "volume": null,
+      "avg_volume": 5536457,
+      "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
     }
   ]
 }

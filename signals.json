@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-05-11 12:14",
+  "last_updated": "2026-05-12 12:09",
   "signals": [
     {
       "date": "2026-03-21",
@@ -67,6 +67,17 @@
       "volume": null,
       "avg_volume": 8460000,
       "note": "Data sourced via web search (yfinance blocked by sandbox proxy). Close confirmed across multiple sources; volume estimated from average."
+    },
+    {
+      "date": "2026-05-11",
+      "close": 384.44,
+      "signal": "BUY",
+      "reason": "Price ($384.44) closed ABOVE box ceiling ($372.00) for the second session in a row (+1.17% vs prior close $379.98; +3.34% above ceiling). Darvas breakout continues to hold; a new box is forming above $372. Watch for the next 3-day high to define the new ceiling. Volume not directly available via fallback data source.",
+      "box_top": 372.0,
+      "box_bottom": 356.0,
+      "volume": null,
+      "avg_volume": 8252000,
+      "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
     }
   ]
 }

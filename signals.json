@@ -79,5 +79,18 @@
       "avg_volume": 8252000,
       "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
     }
+  ],
+  "UNH": [
+    {
+      "date": "2026-05-12",
+      "close": 396.39,
+      "signal": "BUY",
+      "reason": "Price ($396.39) closed well ABOVE box ceiling ($372.00) for the fourth consecutive session (+3.11% vs prior close $384.44; +6.56% above ceiling). Darvas breakout remains firmly intact. 52-week high is $397.42 \u2014 price approaching that level. New box forming above $372.",
+      "box_top": 372.0,
+      "box_bottom": 356.0,
+      "volume": null,
+      "avg_volume": 6680000,
+      "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
+    }
   ]
 }

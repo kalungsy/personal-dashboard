@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-05-12 12:09",
+  "last_updated": "2026-05-14 12:02",
   "signals": [
     {
       "date": "2026-03-21",
@@ -78,9 +78,7 @@
       "volume": null,
       "avg_volume": 8252000,
       "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
-    }
-  ],
-  "UNH": [
+    },
     {
       "date": "2026-05-12",
       "close": 396.39,
@@ -91,6 +89,18 @@
       "volume": null,
       "avg_volume": 6680000,
       "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
+    },
+    {
+      "date": "2026-05-14",
+      "close": 401.74,
+      "signal": "BUY",
+      "reason": "Price ($401.74) closed ABOVE box ceiling ($372.00) for the sixth consecutive session (+1.35% vs prior close $396.39; +7.99% above ceiling). Hit new 52-week high of $404.14 yesterday (May 13). Slight pullback from that high today (day range $401.01-$401.75) but breakout remains firmly intact. Volume 8.24M vs 8.45M avg (near average). New box forming above $372.",
+      "box_top": 372.0,
+      "box_bottom": 356.0,
+      "volume": 8235731,
+      "avg_volume": 8453561,
+      "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
     }
-  ]
+  ],
+  "UNH": []
 }

@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-05-14 12:02",
+  "last_updated": "2026-05-26 12:07",
   "signals": [
     {
       "date": "2026-03-21",
@@ -100,6 +100,50 @@
       "volume": 8235731,
       "avg_volume": 8453561,
       "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
+    },
+    {
+      "date": "2026-05-19",
+      "close": 389.24,
+      "signal": "HOLD",
+      "reason": "Price ($389.24) inside box ($383.50\u2013$404.15). Consolidating below May 13 52-week high of $404.15.",
+      "box_top": 404.15,
+      "box_bottom": 383.5,
+      "volume": 4920549,
+      "avg_volume": 6900000,
+      "note": "Data sourced via stockanalysis.com"
+    },
+    {
+      "date": "2026-05-20",
+      "close": 383.3,
+      "signal": "HOLD",
+      "reason": "Price ($383.30) inside box ($380.70\u2013$404.15). Box floor holding despite continued pullback from 52-week high.",
+      "box_top": 404.15,
+      "box_bottom": 380.7,
+      "volume": 7667190,
+      "avg_volume": 6900000,
+      "note": "Data sourced via stockanalysis.com"
+    },
+    {
+      "date": "2026-05-21",
+      "close": 382.48,
+      "signal": "HOLD",
+      "reason": "Price ($382.48) inside box ($380.54\u2013$404.15). Box floor at $380.54 (today's low).",
+      "box_top": 404.15,
+      "box_bottom": 380.54,
+      "volume": 4362969,
+      "avg_volume": 6900000,
+      "note": "Data sourced via stockanalysis.com"
+    },
+    {
+      "date": "2026-05-22",
+      "close": 388.47,
+      "signal": "HOLD",
+      "reason": "Price ($388.47) is inside the Darvas Box ($380.54\u2013$404.15). Box ceiling set at $404.15 on May 13 (52-week high); no session has exceeded it since. Box floor at $380.54 (May 21 low \u2014 lowest low since ceiling established). Price is 3.9% below ceiling and 2.1% above floor. Volume 5,412,173 vs 20-day avg 6,912,354 \u2014 below average (confirms indecision). Berkshire Hathaway's full UNH exit (disclosed May 15 13F) drove a gap-down on May 18 that held above the box floor. HOLD \u2014 wait for breakout above $404.15 (BUY) or breakdown below $380.54 (SELL). May 25 = Memorial Day (market closed).",
+      "box_top": 404.15,
+      "box_bottom": 380.54,
+      "volume": 5412173,
+      "avg_volume": 6912354,
+      "note": "Data sourced via stockanalysis.com (Chrome MCP); yfinance blocked by sandbox proxy."
     }
   ],
   "UNH": []

@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-05-26 12:07",
+  "last_updated": "2026-05-29 12:07",
   "signals": [
     {
       "date": "2026-03-21",
@@ -102,48 +102,70 @@
       "note": "Data sourced via web search; yfinance blocked by sandbox proxy."
     },
     {
-      "date": "2026-05-19",
-      "close": 389.24,
-      "signal": "HOLD",
-      "reason": "Price ($389.24) inside box ($383.50\u2013$404.15). Consolidating below May 13 52-week high of $404.15.",
-      "box_top": 404.15,
-      "box_bottom": 383.5,
-      "volume": 4920549,
-      "avg_volume": 6900000,
-      "note": "Data sourced via stockanalysis.com"
+      "date": "2026-05-15",
+      "close": 393.85,
+      "signal": "BUY",
+      "reason": "Price ($393.85) closed ABOVE box ceiling ($372.00) for the seventh consecutive session (-1.33% vs prior close $399.09; +5.87% above ceiling). Slight pullback from recent 52-week high of $404.14 (May 13) but breakout remains firmly intact. New box forming above $372.",
+      "box_top": 372.0,
+      "box_bottom": 356.0,
+      "volume": null,
+      "avg_volume": 8320000,
+      "note": "Data sourced via web search; yfinance blocked by sandbox proxy. Close price may reflect intraday value if market still open."
     },
     {
-      "date": "2026-05-20",
-      "close": 383.3,
-      "signal": "HOLD",
-      "reason": "Price ($383.30) inside box ($380.70\u2013$404.15). Box floor holding despite continued pullback from 52-week high.",
-      "box_top": 404.15,
-      "box_bottom": 380.7,
-      "volume": 7667190,
-      "avg_volume": 6900000,
-      "note": "Data sourced via stockanalysis.com"
-    },
-    {
-      "date": "2026-05-21",
-      "close": 382.48,
-      "signal": "HOLD",
-      "reason": "Price ($382.48) inside box ($380.54\u2013$404.15). Box floor at $380.54 (today's low).",
-      "box_top": 404.15,
-      "box_bottom": 380.54,
-      "volume": 4362969,
-      "avg_volume": 6900000,
-      "note": "Data sourced via stockanalysis.com"
+      "date": "2026-05-18",
+      "close": 375.46,
+      "signal": "BUY",
+      "reason": "Price ($375.46) still above box ceiling ($372.00), but barely (+0.93%). Massive -4.7% intraday drop from Fri close ($393.85) after Berkshire Hathaway fully exited its ~5M-share UNH position (13F filing). Day range $375.00\u2013$397.63. Breakout above $372 technically intact but under severe pressure \u2014 watch for close below $372 for SELL signal.",
+      "box_top": 372.0,
+      "box_bottom": 356.0,
+      "volume": null,
+      "avg_volume": 8320000,
+      "note": "Data sourced via web search; yfinance blocked by sandbox proxy. Price is intraday (market may still be open). Berkshire exit driving heavy selling."
     },
     {
       "date": "2026-05-22",
       "close": 388.47,
       "signal": "HOLD",
-      "reason": "Price ($388.47) is inside the Darvas Box ($380.54\u2013$404.15). Box ceiling set at $404.15 on May 13 (52-week high); no session has exceeded it since. Box floor at $380.54 (May 21 low \u2014 lowest low since ceiling established). Price is 3.9% below ceiling and 2.1% above floor. Volume 5,412,173 vs 20-day avg 6,912,354 \u2014 below average (confirms indecision). Berkshire Hathaway's full UNH exit (disclosed May 15 13F) drove a gap-down on May 18 that held above the box floor. HOLD \u2014 wait for breakout above $404.15 (BUY) or breakdown below $380.54 (SELL). May 25 = Memorial Day (market closed).",
+      "reason": "Price ($388.47) is inside the Darvas Box ($380.54\u2013$404.15). Box ceiling set at $404.15 on May 13 (52-week high); no day has exceeded it since. Box floor at $380.54 (May 21 low). Price is 3.9% below ceiling and 2.1% above floor. Volume 5,412,173 vs 20-day avg 6,912,354 \u2014 below average. Berkshire Hathaway fully exited UNH (disclosed May 15) drove a gap-down on May 18 which held above box floor. HOLD \u2014 wait for breakout above $404.15 (BUY) or breakdown below $380.54 (SELL).",
       "box_top": 404.15,
       "box_bottom": 380.54,
       "volume": 5412173,
       "avg_volume": 6912354,
-      "note": "Data sourced via stockanalysis.com (Chrome MCP); yfinance blocked by sandbox proxy."
+      "note": "Data sourced via stockanalysis.com (Chrome MCP); yfinance blocked by sandbox proxy. May 25 = Memorial Day (market closed); last trading day was May 22."
+    },
+    {
+      "date": "2026-05-26",
+      "close": 376.86,
+      "signal": "HOLD",
+      "reason": "Price ($376.86) is inside the Darvas Box ($376.41\u2013$404.15). Box ceiling set at $404.15 on May 13 (52-week high); not exceeded since. Box floor now at $376.41 (May 26 intraday low). Price is 6.7% below ceiling and only $0.45 above floor \u2014 breakdown risk is elevated. Volume 6,196,720 vs 20-day avg 6,859,385 (slightly below avg). HOLD \u2014 close below $376.41 triggers SELL; close above $404.15 triggers BUY.",
+      "box_top": 404.15,
+      "box_bottom": 376.41,
+      "volume": 6196720,
+      "avg_volume": 6859385,
+      "note": "Data sourced via Chrome MCP (stockanalysis.com); yfinance blocked by sandbox proxy."
+    },
+    {
+      "date": "2026-05-27",
+      "close": 384.01,
+      "signal": "HOLD",
+      "reason": "Price ($384.01) is inside the Darvas Box ($375.00\u2013$404.15). Box ceiling $404.15 (May 13 52-week high) remains intact. Box floor updated to $375.00 (May 27 intraday low pierced previous $376.41 floor, but close held above). +1.90% gain (+$7.15) from prior close $376.86. Volume 4,540,000 vs 20-day avg 6,610,000 (below average). HOLD \u2014 watch for close above $404.15 (BUY) or below $375.00 (SELL).",
+      "box_top": 404.15,
+      "box_bottom": 375.0,
+      "volume": 4540000,
+      "avg_volume": 6610000,
+      "note": "Data sourced via web search (yfinance blocked by sandbox proxy)."
+    },
+    {
+      "date": "2026-05-28",
+      "close": 382.53,
+      "signal": "HOLD",
+      "reason": "Price ($382.53) is inside the Darvas Box ($375.00-$404.15). Box ceiling $404.15 (May 13 52-week high) remains intact. Box floor $375.00 (May 27 intraday low). Price is 5.3% below ceiling and 2.0% above floor. Volume 4,254,570 vs 20-day avg ~6,610,000 (below average). Day range $380.96-$389.26. HOLD \u2014 watch for close above $404.15 (BUY) or below $375.00 (SELL). Note: May 29 intraday ~$386.92 (+0.76%), still inside box.",
+      "box_top": 404.15,
+      "box_bottom": 375.0,
+      "volume": 4254570,
+      "avg_volume": 6610000,
+      "note": "Data sourced via stockanalysis.com (web fetch); yfinance blocked by sandbox proxy."
     }
   ],
   "UNH": []

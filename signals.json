@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-05-29 12:07",
+  "last_updated": "2026-06-04",
   "signals": [
     {
       "date": "2026-03-21",
@@ -166,6 +166,17 @@
       "volume": 4254570,
       "avg_volume": 6610000,
       "note": "Data sourced via stockanalysis.com (web fetch); yfinance blocked by sandbox proxy."
+    },
+    {
+      "date": "2026-06-04",
+      "close": 377.92,
+      "signal": "HOLD",
+      "reason": "Price ($377.92) is inside the Darvas Box ($375.00\u2013$404.15). Box ceiling $404.15 (May 13 52-week high) remains intact. Box floor $375.00 holds on close basis (intraday low $371.99 briefly breached floor, but close recovered). Day range $371.99\u2013$379.98. Volume ~5,930,000 vs 20-day avg ~6,455,000 (below average). HOLD \u2014 watch for close above $404.15 (BUY) or close below $375.00 (SELL).",
+      "box_top": 404.15,
+      "box_bottom": 375.0,
+      "volume": 5930000,
+      "avg_volume": 6455000,
+      "note": "Data sourced via web search (yfinance blocked by sandbox proxy)."
     }
   ],
   "UNH": []

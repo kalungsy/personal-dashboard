@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-06-05",
+  "last_updated": "2026-06-15 21:56",
   "signals": [
     {
       "date": "2026-03-21",
@@ -188,6 +188,39 @@
       "volume": 12670000,
       "avg_volume": 6590000,
       "note": "Data sourced via web search (yfinance blocked by sandbox proxy). Price/volume sourced from multiple search sources."
+    },
+    {
+      "date": "2026-06-11",
+      "close": 411.62,
+      "signal": "BUY",
+      "reason": "Price ($411.62, intraday June 11; June 10 close $407.73) broke ABOVE box ceiling ($404.15). Breakout confirmed \u2014 price has sustained above ceiling since ~June 9. June 10 set new 52-week high at $415.97. Volume June 10: ~6,510,000 vs 20-day avg ~6,500,000 (slightly above average \u2014 breakout confirmed). New box forming: ceiling ~$415.97 (June 10 52-week high), floor ~$404.15 (old ceiling now support). BUY \u2014 trend is up; watch for close above $415.97 for continuation or close below $404.15 to re-evaluate.",
+      "box_top": 415.97,
+      "box_bottom": 404.15,
+      "volume": 6510000,
+      "avg_volume": 6500000,
+      "note": "Data sourced via web search (yfinance blocked by sandbox proxy). June 10 set 52-week high $415.97; June 11 intraday $411.62 (+1.24%). Box updated: old ceiling $404.15 becomes new floor."
+    },
+    {
+      "date": "2026-06-12",
+      "close": 408.96,
+      "signal": "HOLD",
+      "reason": "Price ($408.96) is inside the Darvas Box ($404.15\u2013$415.97). Box ceiling $415.97 (June 10 52-week high) remains intact. Box floor $404.15 holds. Day range $405.40\u2013$408.96 \u2014 close is $7.01 (1.7%) below ceiling. Volume data inconclusive (partial data available); 20-day avg ~6.5M. HOLD \u2014 a close above $415.97 triggers BUY continuation; close below $404.15 triggers re-evaluation.",
+      "box_top": 415.97,
+      "box_bottom": 404.15,
+      "volume": 6500000,
+      "avg_volume": 6500000,
+      "note": "Data sourced via web search (yfinance blocked by sandbox proxy). Close $408.96, range $405.40\u2013$408.96 from search results. Volume estimated at avg (~6.5M) due to incomplete intraday data."
+    },
+    {
+      "date": "2026-06-15",
+      "close": 407.0,
+      "signal": "HOLD",
+      "reason": "Price (~$407.00 est.) is inside the Darvas Box ($404.15\u2013$415.97). Box ceiling $415.97 (June 10 52-week high) remains intact. Box floor $404.15 holds \u2014 today's intraday low was $404.81, confirming floor support. Day range $404.81\u2013$409.33. Volume 7,270,000 vs 20-day avg ~7,510,000 (slightly below avg). HOLD \u2014 close above $415.97 triggers BUY continuation; close below $404.15 triggers SELL re-evaluation.",
+      "box_top": 415.97,
+      "box_bottom": 404.15,
+      "volume": 7270000,
+      "avg_volume": 7510000,
+      "note": "Data sourced via web search (yfinance blocked by sandbox proxy). Close ~$407 estimated from day range $404.81\u2013$409.33; intraday low held above box floor $404.15."
     }
   ],
   "UNH": []

@@ -283,6 +283,16 @@
       "volume": 3605084,
       "avg_volume": 4187024,
       "note": "Data sourced from stockanalysis.com (Aug 18, 2026 4:00 PM EDT close). Yahoo Finance chart API returned empty via web fetch. Box boundaries carried over unchanged from the 2026-06-15 entry and are two months stale."
+    },
+    {
+      "date": "2026-08-24",
+      "close": 398.76,
+      "signal": "HOLD",
+      "reason": "Box rebased Aug 2026. Price ($398.76) inside box ($397.80-$419.34). Ceiling: Aug 3 high $419.34. Floor: Aug 5 low $397.80. Prior stale box was producing false SELL signals.",
+      "box_top": 419.34,
+      "box_bottom": 397.8,
+      "volume": 4440000,
+      "avg_volume": 4200000
     }
   ],
   "UNH": []

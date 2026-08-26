@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-08-18",
+  "last_updated": "2026-08-25",
   "signals": [
     {
       "date": "2026-03-21",
@@ -293,6 +293,17 @@
       "box_bottom": 397.8,
       "volume": 4440000,
       "avg_volume": 4200000
+    },
+    {
+      "date": "2026-08-25",
+      "close": 396.59,
+      "signal": "HOLD",
+      "reason": "Price ($396.59, -0.54% vs prior close $398.76) is INSIDE the REBASED Darvas Box ($383.83-$403.18). BOX REBASED as flagged in the 2026-08-18 entry: the old box ($404.15-$415.97) was set 2026-06-10 and was ~2.5 months stale, producing false SELL prints. New ceiling $403.18 = Aug 14 high, unexceeded for 7 consecutive sessions. New floor $383.83 = Aug 20 swing low, unbroken for 3 consecutive sessions (Aug 21 low $386.00, Aug 24 low $390.86, Aug 25 low $395.62). Price sits 1.6% below the ceiling and 3.3% above the floor. Day range $395.62-$399.03. Volume 2,651,626 vs 20-day avg 4,091,045 (0.65x - well below average, light-volume drift). Two-day bounce off the Aug 20 low ($384.85 close) has recovered ~3%. HOLD - close above $403.18 triggers BUY; close below $383.83 triggers SELL.",
+      "box_top": 403.18,
+      "box_bottom": 383.83,
+      "volume": 2651626,
+      "avg_volume": 4091045,
+      "note": "Data sourced from stockanalysis.com history table (Yahoo Finance chart API returned empty via web fetch). Darvas box rebased to the Aug 14 - Aug 25 range per the ACTION NEEDED note in the 2026-08-18 entry."
     }
   ],
   "UNH": []

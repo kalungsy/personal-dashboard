@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-08-25",
+  "last_updated": "2026-08-26",
   "signals": [
     {
       "date": "2026-03-21",
@@ -304,6 +304,27 @@
       "volume": 2651626,
       "avg_volume": 4091045,
       "note": "Data sourced from stockanalysis.com history table (Yahoo Finance chart API returned empty via web fetch). Darvas box rebased to the Aug 14 - Aug 25 range per the ACTION NEEDED note in the 2026-08-18 entry."
+    },
+    {
+      "date": "2026-08-25",
+      "close": 396.59,
+      "signal": "HOLD",
+      "reason": "Price ($396.59) is inside the redrawn Darvas Box ($383.83–$407.32). Box recalibrated: floor $383.83 (Aug 20 intraday low, held 4+ sessions unbroken); ceiling $407.32 (Aug 13 high, unexceeded for 9+ sessions). Price is mid-box, +3.3% above floor and -2.6% below ceiling. Volume ~2,650,000 vs avg ~4,090,000 (below average). HOLD — watch for close above $407.32 (BUY) or below $383.83 (SELL).",
+      "box_top": 407.32,
+      "box_bottom": 383.83,
+      "volume": 2650000,
+      "avg_volume": 4090000,
+      "note": "Corrective entry: rebasing box from stale June levels ($404.15–$415.97) to current Aug action."
+    },
+    {
+      "date": "2026-08-26",
+      "close": 401.01,
+      "signal": "HOLD",
+      "reason": "Price ($401.01) is inside the Darvas Box ($383.83–$407.32). Close is $6.31 (1.6%) below ceiling and $17.18 above floor — mid-to-upper box. +1.11% gain from prior close ($396.59). Box intact: ceiling $407.32 (Aug 13 high), floor $383.83 (Aug 20 low). HOLD — close above $407.32 triggers BUY; close below $383.83 triggers SELL.",
+      "box_top": 407.32,
+      "box_bottom": 383.83,
+      "volume": 2580000,
+      "avg_volume": 4090000
     }
   ],
   "UNH": []

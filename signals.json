@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-09-04",
+  "last_updated": "2026-09-16",
   "signals": [
     {
       "date": "2026-03-21",
@@ -358,6 +358,17 @@
       "volume": 5565554,
       "avg_volume": 4095862,
       "note": "Sep 7, 2026 is Labor Day (US market closed); last trading day was Sep 4. Data from stockanalysis.com history table via Chrome; Yahoo Finance chart API returned empty via both direct and corsproxy fetch."
+    },
+    {
+      "date": "2026-09-16",
+      "close": 375.26,
+      "signal": "HOLD",
+      "reason": "Price ($375.26, -0.18% vs prior close $375.93) is inside the REBASED Darvas Box ($373.63-$406.53). BOX REBASED: the prior box ($404.15-$415.97) was carried over from 2026-06-15 and was flagged as stale in the 2026-08-18 entry; against it today would print a meaningless SELL. New ceiling $406.53 = Sep 9 high, unexceeded for 5 consecutive sessions (confirmed). New floor $373.63 = Sep 16 intraday low - TENTATIVE, not yet confirmed: UNH has made lower lows on 4 of the last 5 sessions (Sep 11 $375.90, Sep 15 $375.50, Sep 16 $373.63), so the floor is still being pushed down and the box is not yet complete. Day range $373.63-$380.22. Volume 3,935,121 vs 20-day avg 4,707,131 (0.84x - below average, weak conviction on the slide). Trend is clearly down from the Sep 9 peak ($406.53 high) - roughly -7.7% in five sessions. Watch for a close above $406.53 (BUY) or a decisive close below $373.63 once the floor confirms (SELL).",
+      "box_top": 406.53,
+      "box_bottom": 373.63,
+      "volume": 3935121,
+      "avg_volume": 4707131,
+      "note": "Data sourced from stockanalysis.com history table (Yahoo Finance chart API returned empty via web fetch, both direct and corsproxy). Box rebased per the ACTION NEEDED flag in the 2026-08-18 entry; floor is tentative pending 3-session confirmation."
     }
   ],
   "UNH": []

@@ -1,6 +1,6 @@
 {
   "ticker": "UNH",
-  "last_updated": "2026-09-28",
+  "last_updated": "2026-10-01",
   "signals": [
     {
       "date": "2026-03-21",
@@ -413,6 +413,17 @@
       "volume": 4425831,
       "avg_volume": 5023246,
       "note": "Data sourced from stockanalysis.com history table (Yahoo Finance chart API returned empty via both direct and corsproxy fetch). Scheduled task last ran 2026-08-18; box rebased autonomously per the ACTION NEEDED note in that entry."
+    },
+    {
+      "date": "2026-10-01",
+      "close": 365.2,
+      "signal": "SELL",
+      "reason": "Price ($365.20) closed BELOW the box floor ($366.00) — Darvas breakdown. BOX REBASED: the stored box ($404.15–$415.97) was 3.5 months stale (last logged 2026-08-18) and sat entirely above current price, so it was redrawn from the September consolidation: ceiling $381.39 (Sep 22 high, unexceeded for 7 sessions), floor $366.00 (Sep 23 low, unbroken until today). Today's low $362.60 is a new 3-week low and the close is -0.51% (-$1.88) vs prior close $367.08, extending a steady slide from the Sep 9 swing high of $406.53 (-10.2%). Volume 3,926,777 vs 20-day avg 4,976,380 (0.79x — below average, weak conviction on the decline). Trend is down; floor now reforming near $362.60.",
+      "box_top": 381.39,
+      "box_bottom": 366,
+      "volume": 3926777,
+      "avg_volume": 4976380,
+      "note": "Data sourced from stockanalysis.com history table via Chrome (Yahoo Finance chart API returned empty). Box rebased after a 6-week gap in daily runs; intervening price action Aug 18–Oct 1 not individually logged."
     }
   ],
   "UNH": []
